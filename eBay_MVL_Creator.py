@@ -4,12 +4,9 @@ import pandas as pd
 import os
 import xlwings as xw
 
-
-
 # initalise the tkinter GUI
 root = tk.Tk()
 root.title("eBay_MVL_Creator")
-
 
 root.geometry("600x600") # set the root dimensions
 root.pack_propagate(False) # tells the root to not let the widgets inside it determine its size.
@@ -71,7 +68,6 @@ def File_dialog():
     label_file["text"] = filename
     return None
 
-
 def Transform_1():
     """If the file selected is valid this will load the file into the Treeview"""
     global df  # Declare df as global to update it
@@ -87,10 +83,30 @@ def Transform_1():
 
             # Delete all years and rows of data before i.e. 1970.
             df = df[df["Year"].between(1970, 2024)]
+
+            print(df)
+
+            # Define a list of valid makes
+            valid_makes = [
+            'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+            'Cadillac', 'Chevrolet', 'Chrysler', 'Daihatsu', 'Dodge', 'Eagle', 'Ferrari',
+            'Fiat', 'Ford', 'Freightliner', 'Genesis', 'Geo', 'GMC', 'Hino', 'Honda',
+            'Hummer', 'Hyundai', 'INFINITI', 'Isuzu', 'Jaguar', 'Jeep', 'Kenworth', 'Kla',
+            'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Mack', 'Maserati',
+            'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
+            'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
+            'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star'
+             ]
+
+            # Filter "Make" column based on the valid makes list
+            df = df[df['Make'].isin(valid_makes)]
             
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "eBay_Master_Vehicle_List_1970.xlsx")
             df.to_excel(file_path, index=False,freeze_panes=(1, 1))
+
+            print(df)
 
             # Open the Excel file and set all columns width to 15
             with xw.App(visible=False) as app:
@@ -129,6 +145,22 @@ def Transform_2():
             
             # Delete all years and rows of data before i.e. 1990.
             df = df[df["Year"].between(1990, 2024)]
+
+            # Define a list of valid makes
+            valid_makes = [
+            'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+            'Cadillac', 'Chevrolet', 'Chrysler', 'Daihatsu', 'Dodge', 'Eagle', 'Ferrari',
+            'Fiat', 'Ford', 'Freightliner', 'Genesis', 'Geo', 'GMC', 'Hino', 'Honda',
+            'Hummer', 'Hyundai', 'INFINITI', 'Isuzu', 'Jaguar', 'Jeep', 'Kenworth', 'Kla',
+            'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Mack', 'Maserati',
+            'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
+            'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
+            'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star'
+             ]
+
+            # Filter "Make" column based on the valid makes list
+            df = df[df['Make'].isin(valid_makes)]
 
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "eBay_Master_Vehicle_List_1990.xlsx")
@@ -211,9 +243,24 @@ def Transform_4():
         else:
             df = pd.read_excel(excel_filename)
 
-
             # Delete all years and rows of data before i.e. 2010.
             df = df[df["Year"].between(2010, 2024)]
+
+            # Define a list of valid makes
+            valid_makes = [
+            'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+            'Cadillac', 'Chevrolet', 'Chrysler', 'Daihatsu', 'Dodge', 'Eagle', 'Ferrari',
+            'Fiat', 'Ford', 'Freightliner', 'Genesis', 'Geo', 'GMC', 'Hino', 'Honda',
+            'Hummer', 'Hyundai', 'INFINITI', 'Isuzu', 'Jaguar', 'Jeep', 'Kenworth', 'Kla',
+            'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Mack', 'Maserati',
+            'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
+            'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
+            'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star'
+             ]
+
+            # Filter "Make" column based on the valid makes list
+            df = df[df['Make'].isin(valid_makes)]
 
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "eBay_Master_Vehicle_List_2010.xlsx")
@@ -257,6 +304,25 @@ def Transform_5():
 
             # Delete column [Region] and [ePID]
             df = df.drop(columns=["ePID"])
+
+            # Delete all years and rows of data before i.e. 1970.
+            df = df[df["Year"].between(1970, 2024)]
+
+            # Define a list of valid makes
+            valid_makes = [
+            'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+            'Cadillac', 'Chevrolet', 'Chrysler', 'Daihatsu', 'Dodge', 'Eagle', 'Ferrari',
+            'Fiat', 'Ford', 'Freightliner', 'Genesis', 'Geo', 'GMC', 'Hino', 'Honda',
+            'Hummer', 'Hyundai', 'INFINITI', 'Isuzu', 'Jaguar', 'Jeep', 'Kenworth', 'Kla',
+            'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Mack', 'Maserati',
+            'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
+            'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
+            'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star'
+             ]
+
+            # Filter "Make" column based on the valid makes list
+            df = df[df['Make'].isin(valid_makes)]
             
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "eBay_MVL_Filter_1970.xlsx")
@@ -299,6 +365,22 @@ def Transform_6():
 
             # Delete all years and rows of data before i.e. 1990.
             df = df[df["Year"].between(1990, 2024)]
+
+            # Define a list of valid makes
+            valid_makes = [
+            'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+            'Cadillac', 'Chevrolet', 'Chrysler', 'Daihatsu', 'Dodge', 'Eagle', 'Ferrari',
+            'Fiat', 'Ford', 'Freightliner', 'Genesis', 'Geo', 'GMC', 'Hino', 'Honda',
+            'Hummer', 'Hyundai', 'INFINITI', 'Isuzu', 'Jaguar', 'Jeep', 'Kenworth', 'Kla',
+            'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Mack', 'Maserati',
+            'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
+            'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
+            'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star'
+             ]
+
+            # Filter "Make" column based on the valid makes list
+            df = df[df['Make'].isin(valid_makes)]
             
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "eBay_MVL_Filter_1990.xlsx")
@@ -344,8 +426,3 @@ def clear_data():
     return None
    
 root.mainloop()
-
-
-
-
-
