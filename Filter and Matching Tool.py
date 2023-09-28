@@ -21,7 +21,6 @@ root.geometry("650x650") # set the root dimensions
 root.pack_propagate(False) # tells the root to not let the widgets inside it determine its size.
 root.resizable(0, 0) # makes the root window fixed in size.
 
-
 frame1 = tk.LabelFrame(root, text="Functions")
 frame1.place(height=150, width=635, relx=0.01)
 
@@ -47,14 +46,9 @@ button4.place(rely=0.4, relx=0.01)
 button5 = tk.Button(frame1, text="Run Matching Filter", command=lambda: Run_Matching_Filter(df1, df2))
 button5.place(rely=0.2, relx=0.01)
 
-# button6 = tk.Button(frame1, text="Check Compatibility", command=lambda: Check_Compatibility(df1, df2))
-# button6.place(rely=0.45, relx=0.01)
-
 # Check Compatibility button
-button6 = tk.Button(frame1, text="Check Compatibility", command=lambda: Check_Compatibility())
+button6 = tk.Button(frame1, text="Check Compatibility", command=lambda: print_compatibility())
 button6.place(rely=0.45, relx=0.01)
-
-
 
 label_file1 = ttk.Label(file_frame, text="No File Selected")
 label_file1.place(rely=0, relx=0)
@@ -89,12 +83,13 @@ def Read_data_1():
         else:
             df1 = pd.read_excel(excel_filename)
 
-            # Convert numeric columns in df1 to object
-            numeric_columns = ['Body', 'NumDoors', 'Drive Type', 'Engine - Liter_Display', 
-                               'Engine - CC', 'Engine - Block Type', 'Engine - Cylinders', 
-                               'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID'
-                               ]
-            df1[numeric_columns] = df1[numeric_columns].astype(object)
+            # Convert only specific columns to object
+            columns_to_convert_to_object = [
+                'Body', 'Drive Type', 'Engine - Block Type', 'Engine - Liter_Display',
+                'Fuel Type Name', 'Cylinder Type Name', 'Aspiration'
+            ]
+            df1[columns_to_convert_to_object] = df1[columns_to_convert_to_object].astype(object)
+             
 
             # Check the data types of the DataFrame
             print(df1.dtypes)
@@ -142,44 +137,52 @@ def Read_data_2():
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
     
-  
-# Function to check compatibility
-# def Check_Compatibility():
-#     global df1, df2
-#     if df1 is None or df1.empty or df2 is None or df2.empty:
-#         messagebox.showerror("Error", "Both dataframes must be loaded before checking compatibility.")
-#         return
 
-#     common_columns = set(df1.columns) & set(df2.columns)
+def Check_Compatibility(df1, df2):
+    """Checks the compatibility of two dataframes, ignoring empty values in df1.
 
-#     if not common_columns:
-#         messagebox.showerror("Error", "No common columns found between the two dataframes.")
-#         return
+    Args:
+        df1 (pandas.DataFrame): The first dataframe.
+        df2 (pandas.DataFrame): The second dataframe.
 
-#     incompatible_columns = []
+    Returns:
+        str: "Compatible" if the dataframes are compatible, "Not Compatible" otherwise.
+    """
+    
+    # Check if both dataframes are loaded and not empty.
+    if df1 is None or df2 is None:
+        raise ValueError("Both dataframes must be provided.")
 
-#     for column in common_columns:
-#         values1 = df1[column].astype(str)
-#         values2 = df2[column].astype(str)
+    # Find the common columns between the two dataframes.
+    common_columns = set(df1.columns) & set(df2.columns)
 
-#         # Filter out empty values in df1
-#         values1 = values1[values1 != '']
+    # Check if there are any common columns.
+    if not common_columns:
+        return "Not Compatible: No common columns found between the two dataframes."
 
-#         # Check if any non-empty values in df1 are NOT in df2 (case-insensitive)
-#         incompatible_values = values1[~values1.str.lower().isin(values2.str.lower())]
+    # Check if all values in the common columns of df1 (ignoring empty values) are present in df2
+    for column in common_columns:
+        values1 = df1[column].astype(str).replace('nan', '').str.strip()
+        values2 = df2[column].astype(str).replace('nan', '').str.strip()
 
-#         if not incompatible_values.empty:
-#             incompatible_columns.append(column)
+        # Filter out empty and 'nan' values in df1
+        # non_empty_values1 = values1[~pd.isna(values1) & (values1 != '')]
+        non_empty_values1 = values1[values1 != '']
 
-#     if incompatible_columns:
-#         messagebox.showerror("Error", f"The following columns are not compatible: {', '.join(incompatible_columns)}")
-#     else:
-#         messagebox.showinfo("Success", "Dataframes are compatible.")
+        # Check if any non-empty value in df1 is not in df2 (case-insensitive).
+        if not non_empty_values1.isin(values2).all():
+            print(f"Incompatible column: {column}")
+            print(f"Incompatible values: {non_empty_values1[~non_empty_values1.isin(values2)]}")
+            return "Not Compatible: Dataframes are not compatible."
+            
 
+    # If we reach this point, all non-empty values in the common columns of df1 are present in df2, so the dataframes are compatible.
+    return "Compatible: Dataframes are compatible."
 
-
-
-
+def print_compatibility():
+    compatibility = Check_Compatibility(df1, df2)  # replace df1 and df2 with your actual dataframes
+    print(compatibility)
+    messagebox.showinfo("Compatibility Check", compatibility)
 
 
 def Run_Matching_Filter(df1, df2):
@@ -208,7 +211,8 @@ def Run_Matching_Filter(df1, df2):
                 value = row[column]
                 if pd.notna(value):
                     # Custom column filter
-                    column_filters &= df2[column].astype(str).str.contains(str(value), case=False, na=False)
+                    #column_filters &= df2[column].astype(str).str.contains(str(value), case=False, na=False)
+                    column_filters &= (df2[column] == value)
 
             # Combine the custom range filter and column filters
             combined_filter = range_filter & column_filters
@@ -264,11 +268,3 @@ def Run_Matching_Filter(df1, df2):
 
 root.mainloop()
 
-
-
-
-
-
-
-
- 
