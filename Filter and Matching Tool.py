@@ -6,76 +6,96 @@ from tkinter import messagebox
 import os
 import xlwings as xw
 from datetime import datetime
-
+import customtkinter
 
 
 # Declare df1 and df2 as global variables
 df1 = None
 df2 = None
 
+# Declare global variables for file paths
+file_path_1 = None
+file_path_2 = None
+# file_path_3 = None
+
+# Setting up theme of the app
+customtkinter.set_appearance_mode("system")
+
+# Setting up them of your components
+customtkinter.set_default_color_theme("blue")
+
 # initalise the tkinter GUI
-root = tk.Tk()
+root = customtkinter.CTk()
 root.title("Filter and Matching Tool")
 
 root.geometry("650x650") # set the root dimensions
 root.pack_propagate(False) # tells the root to not let the widgets inside it determine its size.
 root.resizable(0, 0) # makes the root window fixed in size.
 
-frame1 = tk.LabelFrame(root, text="Functions")
-frame1.place(height=150, width=635, relx=0.01)
+frame1 = tk.LabelFrame(root, text="Functions", bg="lightgrey", fg="black", font=("Arial", 12, "bold"))
+frame1.place(height=150, width=800, relx=0.01)
 
-file_frame = tk.LabelFrame(root, text="Display File")
-file_frame.place(height=200, width=635, rely=0.65, relx=0.01)
+file_frame = tk.LabelFrame(root, text="Display File", bg="lightgrey", fg="black", font=("Arial", 12, "bold"))
+file_frame.place(height=200, width=800, rely=0.65, relx=0.01)
 
-file_frame1 = tk.LabelFrame(root, text="Display File")
-file_frame1.place(height=200, width=635, rely=0.30, relx=0.01)
+file_frame1 = tk.LabelFrame(root, text="Display File", bg="lightgrey", fg="black", font=("Arial", 12, "bold"))
+file_frame1.place(height=200, width=800, rely=0.30, relx=0.01)
 
 # Buttons
-button1 = tk.Button(file_frame, text="Select Custom Fitment File", command=lambda: File_dialog_1())
+button1 = customtkinter.CTkButton(file_frame, text="Select Custom Fitment File", command=lambda: File_dialog_1(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button1.place(rely=0.2, relx=0.01)
 
-button2 = tk.Button(file_frame, text="Read The File into Data Frame", command=lambda: Read_data_1())
+button2 = customtkinter.CTkButton(file_frame, text="Read File and Save File Path Link", command=lambda: Read_data_1(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button2.place(rely=0.4, relx=0.01)
 
-button3 = tk.Button(file_frame1, text="Select eBay Pre-Filter MVL File", command=lambda: File_dialog_2())
+button3 = customtkinter.CTkButton(file_frame1, text="Select eBay MVL File", command=lambda: File_dialog_2(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button3.place(rely=0.2, relx=0.01)
 
-button4 = tk.Button(file_frame1, text="Read The File into Data Frame", command=lambda: Read_data_2())
+button4 = customtkinter.CTkButton(file_frame1, text="Read File and Save File Path Link", command=lambda: Read_data_2(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button4.place(rely=0.4, relx=0.01)
 
-button5 = tk.Button(frame1, text="Run Matching Filter", command=lambda: Run_Matching_Filter(df1, df2))
+button5 = customtkinter.CTkButton(frame1, text="Run Matching Filter", command=lambda: Run_Matching_Filter(df1, df2), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button5.place(rely=0.2, relx=0.01)
 
-# Check Compatibility button
-button6 = tk.Button(frame1, text="Check Compatibility", command=lambda: print_compatibility())
-button6.place(rely=0.45, relx=0.01)
+button6 = customtkinter.CTkButton(frame1, text="Check Valid Values", command=lambda: print_compatibility(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
+button6.place(rely=0.5, relx=0.01)
 
-label_file1 = ttk.Label(file_frame, text="No File Selected")
+button7 = customtkinter.CTkButton(frame1, text="Create CA eBay Compatibilty", command=lambda: Read_data_3(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
+button7.place(rely=0.2, relx=0.3)
+
+label_file1 = ttk.Label(file_frame, text="No File Selected", background="lightgrey", foreground="blue", font=("Arial", 11, "bold"))
 label_file1.place(rely=0, relx=0)
 
-label_file2 = ttk.Label(file_frame1, text="No File Selected")
+label_file2 = ttk.Label(file_frame1, text="No File Selected", background="lightgrey", foreground="blue", font=("Arial", 11, "bold"))
 label_file2.place(rely=0, relx=0)
+
 
 def File_dialog_1():
     """This Function will open the file explorer and assign the chosen file path to label_file1"""
+    global file_path_1  # Declare as global to update it
     filename = filedialog.askopenfilename(initialdir="/",
                                           title="Select A File",
                                           filetype=(("xlsx files", "*.xlsx"),("All Files", "*.*")))
     label_file1["text"] = filename
+    file_path_1 = filename  # Update the global variable
     return None
 
 def File_dialog_2():
     """This Function will open the file explorer and assign the chosen file path to label_file2"""
+    global file_path_2  # Declare as global to update it
     filename = filedialog.askopenfilename(initialdir="/",
                                           title="Select A File",
                                           filetype=(("xlsx files", "*.xlsx"),("All Files", "*.*")))
     label_file2["text"] = filename
+    file_path_2 = filename  # Update the global variable
     return None
+
 
 def Read_data_1():
     """If the file selected is valid this will load the file into the Treeview"""
     global df1  # Declare df as global to update it
-    file_path = label_file1["text"]
+    # file_path = label_file1["text"]
+    file_path = file_path_1
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
@@ -90,15 +110,17 @@ def Read_data_1():
             ]
             df1[columns_to_convert_to_object] = df1[columns_to_convert_to_object].astype(object)
              
-
             # Check the data types of the DataFrame
             print(df1.dtypes)
-
+   
         print(df1.head(5))
-    
+
+        # Show "Complete" message when the function is done
+        messagebox.showinfo("Read and Save", "completed successfully")
+
     except ValueError:
         # Display an error message using the messagebox
-        messagebox.showerror("Error", "The file you have chosen is invalid")
+        messagebox.showerror("Error", f"The file you have chosen is invalid")
         return None
     except FileNotFoundError:
         # Display an error message using the messagebox
@@ -108,7 +130,8 @@ def Read_data_1():
 def Read_data_2():
     """If the file selected is valid this will load the file into the Treeview"""
     global df2  # Declare df as global to update it
-    file_path = label_file2["text"]
+    # file_path = label_file2["text"]
+    file_path = file_path_2
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
@@ -121,22 +144,105 @@ def Read_data_2():
             df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce')
 
             print(df2.dtypes)
-
-            # Remove leading and trailing whitespaces in df2
-            df2 = df2.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-        
+       
         print(df2.head(5))
         print(df2.dtypes)
+
+        # Show "Complete" message when the function is done
+        messagebox.showinfo("Read and Save", "completed successfully")
     
     except ValueError:
         # Display an error message using the messagebox
-        messagebox.showerror("Error", "The file you have chosen is invalid")
+        messagebox.showerror("Error", f"The file you have chosen is invalid")
         return None
     except FileNotFoundError:
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
     
+
+def Read_data_3():
+    """If the file selected is valid this will load the file into the Treeview"""
+    global df3  # Declare df as global to update it
+    
+    # Specify the path to your local directory where you downloaded files
+    local_directory = os.path.expanduser("~/Desktop")
+
+    # List all files in the local directory
+    files_in_directory = os.listdir(local_directory)
+
+    # Define the substring you want to filter for
+    substring = "RunFilter_Output"
+
+    # Filter files to include only CSV files that contain the specified substring
+    excel_files = [file for file in files_in_directory if file.endswith(".xlsx") and substring in file]
+
+    # If you want to find the latest file based on modification time, you can use this:
+    latest_file = max(excel_files, key=lambda x: os.path.getmtime(os.path.join(local_directory, x)))
+
+    # Construct the full path to the latest file
+    latest_file_path = os.path.join(local_directory, latest_file)
+
+    try:
+        if latest_file_path[-4:] == ".csv":
+            df3 = pd.read_csv(latest_file_path)
+        else:
+            df3 = pd.read_excel(latest_file_path)
+
+            print(df3.head(5))
+
+            
+            # Initialize an empty dictionary to store the formatted strings
+            formatted_data = {}
+
+            # Iterate through each row in the DataFrame
+            for index, row in df3.iterrows():
+                # Format the data in each row
+                formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
+
+                # If this 'PartNumber' is not in the dictionary, add it
+                if row['PartNumber'] not in formatted_data:
+                    formatted_data[row['PartNumber']] = formatted_row
+                else:  # If this 'PartNumber' is already in the dictionary, append the new data
+                    formatted_data[row['PartNumber']] += '^^' + formatted_row
+
+            # Sort the dictionary by key (i.e., 'PartNumber') in ascending order
+            formatted_data = dict(sorted(formatted_data.items()))
+
+            # Convert the dictionary to a list of strings
+            final_text_list = [f"{part_number}\tUNSHIPPED\t{data}" for part_number, data in formatted_data.items()]
+
+            # Join the list of strings with '\n' as the delimiter to create the final text
+            final_text = '\n'.join(final_text_list)
+
+            # Add a header to the final text
+            final_text = "Inventory Number\tQuantity Update Type\ta2Listing Fitment\n" + final_text
+
+            # Print the final text
+            print(final_text)
+
+            # Show "Complete" message when the function is done
+            messagebox.showinfo("CA eBay Compatibility", "Compatibilty Complete")
+
+            # Define the output file name
+            output_file_name = "FitmentOutput.txt"
+
+            # Define the full path to the output text file on your Desktop
+            output_file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
+
+            # Write the final text to the output text file
+            with open(output_file_path, 'w') as txt_file:
+                txt_file.write(final_text)
+
+    except ValueError:
+        # Display an error message using the messagebox
+        messagebox.showerror("Error", f"The file you have chosen is invalid")
+        return None
+    except FileNotFoundError:
+        # Display an error message using the messagebox
+        messagebox.showerror("Error", f"No such file as {latest_file_path}")
+        return None
+
 
 def Check_Compatibility(df1, df2):
     """Checks the compatibility of two dataframes, ignoring empty values in df1.
@@ -146,44 +252,72 @@ def Check_Compatibility(df1, df2):
         df2 (pandas.DataFrame): The second dataframe.
 
     Returns:
-        str: "Compatible" if the dataframes are compatible, "Not Compatible" otherwise.
+        pandas.DataFrame: A DataFrame with details of incompatibility if the dataframes are not compatible, None otherwise.
     """
     
-    # Check if both dataframes are loaded and not empty.
-    if df1 is None or df2 is None:
-        raise ValueError("Both dataframes must be provided.")
+    try:
+        # Check if both dataframes are loaded and not empty.
+        if df1 is None or df2 is None:
+            raise ValueError("Both dataframes must be provided.")
 
-    # Find the common columns between the two dataframes.
-    common_columns = set(df1.columns) & set(df2.columns)
+        # Find the common columns between the two dataframes.
+        common_columns = set(df1.columns) & set(df2.columns)
 
-    # Check if there are any common columns.
-    if not common_columns:
-        return "Not Compatible: No common columns found between the two dataframes."
+        # Check if there are any common columns.
+        if not common_columns:
+            return pd.DataFrame([["No common columns found between the two dataframes.", None, None]], columns=['Column', 'Index', 'Value'])
+        
+        # Initialize a list to store messages about incompatible columns
+        incompatible_columns = []
 
-    # Check if all values in the common columns of df1 (ignoring empty values) are present in df2
-    for column in common_columns:
-        values1 = df1[column].astype(str).replace('nan', '').str.strip()
-        values2 = df2[column].astype(str).replace('nan', '').str.strip()
+        # Check if all values in the common columns of df1 (ignoring empty values) are present in df2.
+        for column in common_columns:
+            values1 = df1[column].astype(str).replace('nan', '').str.strip()
+            values2 = df2[column].astype(str).replace('nan', '').str.strip()
 
-        # Filter out empty and 'nan' values in df1
-        # non_empty_values1 = values1[~pd.isna(values1) & (values1 != '')]
-        non_empty_values1 = values1[values1 != '']
+            # Filter out empty values in df1
+            non_empty_values1 = values1[values1 != '']
 
-        # Check if any non-empty value in df1 is not in df2 (case-insensitive).
-        if not non_empty_values1.isin(values2).all():
-            print(f"Incompatible column: {column}")
-            print(f"Incompatible values: {non_empty_values1[~non_empty_values1.isin(values2)]}")
-            return "Not Compatible: Dataframes are not compatible."
-            
-
-    # If we reach this point, all non-empty values in the common columns of df1 are present in df2, so the dataframes are compatible.
-    return "Compatible: Dataframes are compatible."
+            # Check if any non-empty value in df1 is not in df2.
+            if not non_empty_values1.isin(values2).all():
+                incompatible_values = non_empty_values1[~non_empty_values1.isin(values2)]
+                for index, value in incompatible_values.items():
+                    incompatible_columns.append([column, index, value])
+        
+        # If we found any incompatible columns, return a DataFrame with their details
+        if incompatible_columns:
+            return pd.DataFrame(incompatible_columns, columns=['Column', 'Index', 'Value'])
+        
+        # If we reach this point, all non-empty values in the common columns of df1 are present in df2, so the dataframes are compatible.
+        return pd.DataFrame([["Dataframes are compatible.","", ""]], columns=['Column', 'Index', 'Value'])
+    
+    except ValueError as e:
+        messagebox.showinfo("Error", str(e))
 
 def print_compatibility():
     compatibility = Check_Compatibility(df1, df2)  # replace df1 and df2 with your actual dataframes
-    print(compatibility)
-    messagebox.showinfo("Compatibility Check", compatibility)
+    if compatibility is not None:
+        if isinstance(compatibility, str):
+            messagebox.showinfo("Compatibility Check", compatibility)
+            save_output_to_csv(compatibility, 'compatibility.csv')
+        else:
+            compatibility_str = "\n".join(compatibility['Column'].astype(str) + "\t" + compatibility['Index'].astype(str) + "\t" + compatibility['Value'].astype(str))
+            messagebox.showinfo("Compatibility Check", compatibility_str)
+            save_output_to_csv(compatibility_str, 'error_report.csv')
 
+def save_output_to_csv(error_report, filename):
+    # Split the output string into lines
+    lines = error_report.split('\n')
+
+    # Split each line into columns and store them in a list
+    data = [line.split('\t') for line in lines]
+
+    # Convert the list into a DataFrame
+    df = pd.DataFrame(data, columns=['Column', 'Index', 'Value'])
+
+    # Save the DataFrame to a CSV file
+    file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
+    df.to_csv(file_path, index=False, header=True)
 
 def Run_Matching_Filter(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
@@ -211,9 +345,9 @@ def Run_Matching_Filter(df1, df2):
                 value = row[column]
                 if pd.notna(value):
                     # Custom column filter
-                    #column_filters &= df2[column].astype(str).str.contains(str(value), case=False, na=False)
-                    column_filters &= (df2[column] == value)
-
+                    column_filters &= (df2[column].astype(str) == str(value))
+                    
+                  
             # Combine the custom range filter and column filters
             combined_filter = range_filter & column_filters
 
@@ -230,6 +364,9 @@ def Run_Matching_Filter(df1, df2):
         # Concatenate all filtered DataFrames to produce the final result
         filtered_df2 = pd.concat(filtered_dfs)
 
+        # Add this line to sort 'Year' column in descending order
+        filtered_df2 = filtered_df2.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+
         # Check for and remove duplicates based on all columns
         filtered_df2 = filtered_df2.drop_duplicates()
 
@@ -239,9 +376,12 @@ def Run_Matching_Filter(df1, df2):
         # Define the output file name with the date and time
         output_file_name = f"RunFilter_Output_{current_datetime}.xlsx"
 
+        # Show "Complete" message when the function is done
+        messagebox.showinfo("Run Matching Filter", "Filter Complete")
+
         # Export the filtered data to a new Excel file
         file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
-        filtered_df2.to_excel(file_path, index=False, freeze_panes=(1, 1))
+        filtered_df2.to_excel(file_path, index=False, freeze_panes=(1, 0))
         
         # Open the Excel file and set all columns width to 15
         with xw.App(visible=False) as app:
@@ -267,4 +407,6 @@ def Run_Matching_Filter(df1, df2):
     return filtered_df2
 
 root.mainloop()
+
+
 
