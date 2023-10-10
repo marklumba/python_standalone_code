@@ -12,11 +12,11 @@ import customtkinter
 # Declare df1 and df2 as global variables
 df1 = None
 df2 = None
+df3 = None
 
 # Declare global variables for file paths
 file_path_1 = None
 file_path_2 = None
-# file_path_3 = None
 
 # Setting up theme of the app
 customtkinter.set_appearance_mode("system")
@@ -63,6 +63,9 @@ button6.place(rely=0.5, relx=0.01)
 button7 = customtkinter.CTkButton(frame1, text="Create CA eBay Compatibilty", command=lambda: Read_data_3(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button7.place(rely=0.2, relx=0.3)
 
+button8 = customtkinter.CTkButton(frame1, text="Filter eBay MVL File", command=lambda: Pre_Filter_eBay_MVL_File(df1, df2), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
+button8.place(rely=0.5, relx=0.3)
+
 label_file1 = ttk.Label(file_frame, text="No File Selected", background="lightgrey", foreground="blue", font=("Arial", 11, "bold"))
 label_file1.place(rely=0, relx=0)
 
@@ -94,7 +97,6 @@ def File_dialog_2():
 def Read_data_1():
     """If the file selected is valid this will load the file into the Treeview"""
     global df1  # Declare df as global to update it
-    # file_path = label_file1["text"]
     file_path = file_path_1
     try:
         excel_filename = r"{}".format(file_path)
@@ -104,11 +106,12 @@ def Read_data_1():
             df1 = pd.read_excel(excel_filename)
 
             # Convert only specific columns to object
-            columns_to_convert_to_object = [
+            columns_to_convert_to_object = ['Make', 'Model',
                 'Body', 'Drive Type', 'Engine - Block Type', 'Engine - Liter_Display',
                 'Fuel Type Name', 'Cylinder Type Name', 'Aspiration'
             ]
             df1[columns_to_convert_to_object] = df1[columns_to_convert_to_object].astype(object)
+
              
             # Check the data types of the DataFrame
             print(df1.dtypes)
@@ -117,7 +120,8 @@ def Read_data_1():
 
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully")
-
+        
+    # Handling error
     except ValueError:
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"The file you have chosen is invalid")
@@ -130,7 +134,6 @@ def Read_data_1():
 def Read_data_2():
     """If the file selected is valid this will load the file into the Treeview"""
     global df2  # Declare df as global to update it
-    # file_path = label_file2["text"]
     file_path = file_path_2
     try:
         excel_filename = r"{}".format(file_path)
@@ -151,6 +154,7 @@ def Read_data_2():
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully")
     
+    # Handling error
     except ValueError:
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"The file you have chosen is invalid")
@@ -159,8 +163,8 @@ def Read_data_2():
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
-    
 
+    
 def Read_data_3():
     """If the file selected is valid this will load the file into the Treeview"""
     global df3  # Declare df as global to update it
@@ -191,7 +195,6 @@ def Read_data_3():
 
             print(df3.head(5))
 
-            
             # Initialize an empty dictionary to store the formatted strings
             formatted_data = {}
 
@@ -234,6 +237,7 @@ def Read_data_3():
             with open(output_file_path, 'w') as txt_file:
                 txt_file.write(final_text)
 
+    # Handling error
     except ValueError:
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"The file you have chosen is invalid")
@@ -242,6 +246,83 @@ def Read_data_3():
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {latest_file_path}")
         return None
+    
+
+def Pre_Filter_eBay_MVL_File(df1, df2):
+    if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
+        filtered_dfs = []  # List to store filtered DataFrames
+       
+        for _, row in df1.iterrows():
+            year_beg = row['Year Beg']
+            year_end = row['Year End']
+
+            # Custom range filter for the "Year" column
+            range_filter = (df2['Year'] >= year_beg) & (df2['Year'] <= year_end)
+            
+
+            # Initialize a boolean mask for the custom column filters
+            column_filters = pd.Series(True, index=df2.index)
+
+            # Iterate through the specified columns in df1
+            columns_to_filter = ['Make', 'Model']
+
+            for column in columns_to_filter:
+                value = row[column]
+                if pd.notna(value):
+                    # Custom column filter
+                    column_filters &= (df2[column].astype(str) == str(value))
+                    
+      
+            # Combine the custom range filter and column filters
+            combined_filter = range_filter & column_filters
+
+            # Filtered rows in df2 for this row in df1
+            filtered_rows = df2.loc[combined_filter].copy()  # Use .copy() to avoid SettingWithCopyWarning
+
+            # Append the filtered DataFrame to the list
+            filtered_dfs.append(filtered_rows)
+
+        # Concatenate all filtered DataFrames to produce the final result
+        filtered_df3 = pd.concat(filtered_dfs)
+
+        # Check for and remove duplicates based on all columns
+        filtered_df3 = filtered_df3.drop_duplicates()
+
+        # Generate the current date and time as a string
+        current_datetime = datetime.now().strftime("%Y-%m-%d")
+
+        # Define the output file name with the date and time
+        output_file_name = f"FilterMVLFile_Output_{current_datetime}.xlsx"
+
+        # Show "Complete" message when the function is done
+        messagebox.showinfo("MVL File Output", "Filter Complete")
+
+        # Export the filtered data to a new Excel file
+        file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
+        filtered_df3.to_excel(file_path, index=False, freeze_panes=(1, 0))
+        
+        # Open the Excel file and set all columns width to 15
+        with xw.App(visible=False) as app:
+            wb = xw.Book(file_path)
+
+            # Loop through all worksheets in the workbook
+            for ws in wb.sheets:
+                # Loop through all columns in the worksheet
+                for column in ws.api.UsedRange.Columns:
+                    column.ColumnWidth = 15
+
+            # Save the workbook if needed
+            wb.save()
+
+            # Close the workbook
+            wb.close()
+
+        print(filtered_df3)
+        print(filtered_df3.dtypes)
+    else:
+        print("No data to display")
+
+    return filtered_df3
 
 
 def Check_Compatibility(df1, df2):
