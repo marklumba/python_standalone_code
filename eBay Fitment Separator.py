@@ -23,30 +23,31 @@ ctk.set_default_color_theme("blue")
 root = ctk.CTk()
 root.title("eBay Fitment Separator")
 
-root.geometry("600x400")  # set the root dimensions
+root.geometry("400x400")  # set the root dimensions
 root.pack_propagate(False)  # tells the root to not let the widgets inside it determine its size.
 root.resizable(0, 0)  # makes the root window fixed in size.
 
 # Frame for TreeView
 frame1 = tk.LabelFrame(root, text="Excel Data", bg="lightgrey", fg="black", font=("Arial", 15, "bold"))
-frame1.place(height=200, width=750)
+frame1.place(height=200, width=490, rely=0.1, relx=0)
 
 # Frame for open file dialog
 file_frame = tk.LabelFrame(root, text="Open File", bg="lightgrey", fg="black", font=("Arial", 15, "bold"))
-file_frame.place(height=150, width=750, rely=0.65, relx=0)
+file_frame.place(height=150, width=490, rely=0.65, relx=0)
+
 
 # Buttons
-button1 = ctk.CTkButton(file_frame, text="Browse for File", command=lambda: File_dialog(), fg_color='blue',
-                                  text_color='white', font=('Arial', 15, 'bold'))
+button1 = ctk.CTkButton(file_frame, text="Browse for File", command=lambda: File_dialog(), fg_color="white",
+                                  text_color='black', font=('Arial', 15, 'bold'))
 button1.place(rely=0.2, relx=0.01)
 
-button2 = ctk.CTkButton(file_frame, text="Run Transformation", command=lambda: Transform_1(), fg_color='blue',
-                                  text_color='white', font=('Arial', 15, 'bold'))
+button2 = ctk.CTkButton(file_frame, text="Run Transformation", command=lambda: Transform_1(), fg_color='white',
+                                  text_color='black', font=('Arial', 15, 'bold'))
 button2.place(rely=0.6, relx=0.01)
 
 # The file/file path text
 label_file = ttk.Label(file_frame, text="No File Selected", background="lightgrey", foreground="blue",
-                       font=("Arial", 12, "bold"))
+                       font=("Arial", 8, "bold"))
 label_file.place(rely=0, relx=0)
 
 
@@ -78,9 +79,9 @@ def Transform_1():
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
-            df = pd.read_csv(excel_filename, nrows=5)
+            df = pd.read_csv(excel_filename)
         else:
-            df = pd.read_excel(excel_filename, nrows=5)
+            df = pd.read_excel(excel_filename)
 
         # Initialize an empty list to store the transformed data
         transformed_data = []
@@ -164,7 +165,7 @@ def Transform_1():
             print("Workbook closed")
 
     except ValueError:
-        tk.messagebox.showerror("Information", "The file you have chosen is invalid")
+        tk.messagebox.showerror("Information", f"The file you have chosen is invalid")
         return None
     except FileNotFoundError:
         tk.messagebox.showerror("Information", f"No such file as {file_path}")
@@ -186,6 +187,5 @@ def clear_data():
     return None
 
 root.mainloop()
-
 
 
