@@ -21,7 +21,7 @@ ctk.set_default_color_theme("blue")
 
 # Initialize the tkinter GUI
 root = ctk.CTk()
-root.title("eBay Fitment Separator")
+root.title("CA eBay Fitment Separator")
 
 root.geometry("400x400")  # set the root dimensions
 root.pack_propagate(False)  # tells the root to not let the widgets inside it determine its size.
