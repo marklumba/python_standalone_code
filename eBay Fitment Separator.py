@@ -138,7 +138,7 @@ def Transform_1():
         print(final_df.dtypes)
 
         # Define the output file name
-        output_file_name = "eBayFitmentSeparatorFinal.xlsx"
+        output_file_name = "eBay Fitment Separator Final.xlsx"
 
         # Show "Complete" message when the function is done
         messagebox.showinfo("eBay_Fitment_Separator", "Complete!")
