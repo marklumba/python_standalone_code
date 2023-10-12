@@ -83,6 +83,8 @@ def Transform_1():
         else:
             df = pd.read_excel(excel_filename)
 
+        print(df.dtypes)
+
         # Initialize an empty list to store the transformed data
         transformed_data = []
 
@@ -96,7 +98,7 @@ def Transform_1():
             fitment = row['a2Listing Fitment']
 
             # Split the fitment into multiple fitments if necessary
-            fitments = fitment.split("^^")
+            fitments = str(fitment).split("^^")          
 
             # Iterate through each fitment
             for fitment in fitments:
@@ -109,7 +111,7 @@ def Transform_1():
 
                 # Unpack the components with extra components included in make_model_notes
                 year_range, make_model_notes = fitment_components[0], "|".join(fitment_components[1:])
-
+                
                 # Extract start and end years using regular expression
                 year_match = re.search(year_pattern, year_range)
                 if year_match:
@@ -122,9 +124,9 @@ def Transform_1():
                     start_year, end_year = 0, 0  # Assign default values or handle it as needed
 
                 # Split make_model_notes into make, model, and notes with extra components included in notes
-                make_model, notes = make_model_notes.split("::") if "::" in make_model_notes else (make_model_notes, '')
-                make, model = make_model.split("|") if "|" in make_model else (make_model, '')
-
+                make_model, notes = make_model_notes.split("::", 1) if "::" in make_model_notes else (make_model_notes, '')
+                make, model = make_model.split("|", 1) if "|" in make_model else (make_model, '')
+            
                 # Iterate through each year in the year range
                 for year in range(start_year, end_year + 1):
                     # Append the transformed line to the list of transformed data
@@ -132,6 +134,8 @@ def Transform_1():
 
         # Convert list of lists to DataFrame
         final_df = pd.DataFrame(transformed_data, columns=['Inventory Number', 'Year', 'Make', 'Model', 'Notes'])
+        
+        print(final_df.dtypes)
 
         # Define the output file name
         output_file_name = "eBayFitmentSeparatorFinal.xlsx"
@@ -164,10 +168,12 @@ def Transform_1():
             wb.close()
             print("Workbook closed")
 
-    except ValueError:
+    except ValueError as e:
+        print("Error:", e)  # Print the specific error message
         tk.messagebox.showerror("Information", f"The file you have chosen is invalid")
         return None
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        print("Error:", e)  # Print the specific error message
         tk.messagebox.showerror("Information", f"No such file as {file_path}")
         return None
 
@@ -187,5 +193,4 @@ def clear_data():
     return None
 
 root.mainloop()
-
 
