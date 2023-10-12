@@ -106,13 +106,15 @@ def Read_data_1():
             df1 = pd.read_excel(excel_filename)
 
             # Convert only specific columns to object
-            columns_to_convert_to_object = ['Make', 'Model',
+            columns_to_convert_to_object = ['Make', 'Model', 'Submodel',
                 'Body', 'Drive Type', 'Engine - Block Type', 'Engine - Liter_Display',
                 'Fuel Type Name', 'Cylinder Type Name', 'Aspiration'
             ]
             df1[columns_to_convert_to_object] = df1[columns_to_convert_to_object].astype(object)
+            
+            # Convert the [NumDoors] data type into float
+            df1['NumDoors'] = df1['NumDoors'].astype(float)
 
-             
             # Check the data types of the DataFrame
             print(df1.dtypes)
    
