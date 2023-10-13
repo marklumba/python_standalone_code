@@ -21,33 +21,36 @@ ctk.set_default_color_theme("blue")
 
 # Initialize the tkinter GUI
 root = ctk.CTk()
-root.title("CA eBay Fitment Separator")
+root.title("CA eBay Manual Fitment Separator - Combine")
 
-root.geometry("400x400")  # set the root dimensions
+root.geometry("450x450")  # set the root dimensions
 root.pack_propagate(False)  # tells the root to not let the widgets inside it determine its size.
 root.resizable(0, 0)  # makes the root window fixed in size.
 
 # Frame for TreeView
 frame1 = tk.LabelFrame(root, text="Excel Data", bg="lightgrey", fg="black", font=("Arial", 15, "bold"))
-frame1.place(height=200, width=490, rely=0.1, relx=0)
+frame1.place(height=300, width=550, rely=0, relx=0.01)
 
 # Frame for open file dialog
 file_frame = tk.LabelFrame(root, text="Open File", bg="lightgrey", fg="black", font=("Arial", 15, "bold"))
-file_frame.place(height=150, width=490, rely=0.65, relx=0)
-
+file_frame.place(height=180, width=550, rely=0.65, relx=0.01)
 
 # Buttons
 button1 = ctk.CTkButton(file_frame, text="Browse for File", command=lambda: File_dialog(), fg_color="white",
                                   text_color='black', font=('Arial', 15, 'bold'))
 button1.place(rely=0.2, relx=0.01)
 
-button2 = ctk.CTkButton(file_frame, text="Run Transformation", command=lambda: Transform_1(), fg_color='white',
+button2 = ctk.CTkButton(file_frame, text="Run Separator", command=lambda: Transform_1(), fg_color='white',
                                   text_color='black', font=('Arial', 15, 'bold'))
 button2.place(rely=0.6, relx=0.01)
 
+button3 = ctk.CTkButton(file_frame, text="Run Combine", command=lambda: Transform_2(), fg_color='white',
+                                  text_color='black', font=('Arial', 15, 'bold'))
+button3.place(rely=0.2, relx=0.4)
+
 # The file/file path text
 label_file = ttk.Label(file_frame, text="No File Selected", background="lightgrey", foreground="blue",
-                       font=("Arial", 8, "bold"))
+                       font=("Arial", 9, "bold"))
 label_file.place(rely=0, relx=0)
 
 
@@ -141,13 +144,94 @@ def Transform_1():
         output_file_name = "eBay Fitment Separator Final.xlsx"
 
         # Show "Complete" message when the function is done
-        messagebox.showinfo("eBay_Fitment_Separator", "Complete!")
+        messagebox.showinfo("Separator", "Complete!")
 
         # Define the full path to the output text file on your Desktop
         output_file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
         final_df.to_excel(output_file_path, index=False, freeze_panes=(1, 0))
 
         print(final_df)
+
+        # Open the Excel file and set all columns width to 15
+        with xw.App(visible=False) as app:
+            wb = xw.Book(output_file_path)
+
+            # Loop through all worksheets in the workbook
+            for ws in wb.sheets:
+                # Loop through all columns in the worksheet
+                for column in ws.api.UsedRange.Columns:
+                    column.ColumnWidth = 15
+                    print(f"Column {column.Column}: Width set to {column.ColumnWidth}")
+
+            # Save the workbook if needed
+            wb.save()
+            print(f"Workbook saved: {output_file_path}")
+
+            # Close the workbook
+            wb.close()
+            print("Workbook closed")
+
+    except ValueError as e:
+        print("Error:", e)  # Print the specific error message
+        tk.messagebox.showerror("Information", f"The file you have chosen is invalid")
+        return None
+    except FileNotFoundError as e:
+        print("Error:", e)  # Print the specific error message
+        tk.messagebox.showerror("Information", f"No such file as {file_path}")
+        return None
+    
+
+def Transform_2():
+    """If the file selected is valid, this will load the file into the Treeview"""
+    global df  # Declare df as global to update it
+    file_path = label_file["text"]
+    try:
+        excel_filename = r"{}".format(file_path)
+        if excel_filename[-4:] == ".csv":
+            df = pd.read_csv(excel_filename)
+        else:
+            df = pd.read_excel(excel_filename)
+        
+        # Fill missing values in 'Inventory Number', 'Year', 'Make', 'Model', 'Notes' with an empty string
+        List_columns = ['Inventory Number', 'Year', 'Make', 'Model', 'Notes']
+        
+        df[List_columns] = df[List_columns].fillna('')
+
+        # Group by 'Inventory Number', 'Make', 'Model', and 'Notes' and aggregate 'Year' into a list
+        grouped = df.groupby(['Inventory Number', 'Make', 'Model', 'Notes'])['Year'].apply(list).reset_index()
+
+        # Define a function to convert a list of years into a range string
+        def year_range(years):
+            min_year = min(years)
+            max_year = max(years)
+            if min_year == max_year:
+                return str(min_year)
+            else:
+                return f"{min_year}-{max_year}"
+
+        # Apply the year_range function to the 'Year' column
+        grouped['Year'] = grouped['Year'].apply(year_range)
+
+        # Combine 'Year', 'Make', 'Model', and 'Notes' into a single string in the 'a2Listing Fitment' column
+        grouped['a2Listing Fitment'] = grouped.apply(lambda row: row['Year'] + '|' + row['Make'] + '|' + row['Model'] + ('::' + row['Notes'] if row['Notes'] else ''), axis=1)
+
+        # Group by 'Inventory Number' and aggregate 'a2Listing Fitment' into a list
+        final_df = grouped.groupby('Inventory Number')['a2Listing Fitment'].apply(list).reset_index()
+
+        # Convert the list of fitments into a string with "^^" as the separator
+        final_df['a2Listing Fitment'] = final_df['a2Listing Fitment'].apply(lambda x: "^^".join(x))
+
+        print(final_df)
+
+        # Define the output file name
+        output_file_name = "eBay Fitment Combine Final.xlsx"
+
+        # Show "Complete" message when the function is done
+        messagebox.showinfo("Combine", "Complete!")
+
+        # Define the full path to the output text file on your Desktop
+        output_file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
+        final_df.to_excel(output_file_path, index=False, freeze_panes=(1, 0))
 
         # Open the Excel file and set all columns width to 15
         with xw.App(visible=False) as app:
@@ -193,4 +277,3 @@ def clear_data():
     return None
 
 root.mainloop()
-
