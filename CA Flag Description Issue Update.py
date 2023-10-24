@@ -47,9 +47,9 @@ def downloadLatestFileFromFtp(localFolderPath, ftpHost, ftpUname, ftpPass, remot
     return latest_file
 
 # Usage example credentials
-ftpHost = 'ftp.channeladvisor.com'
-ftpUname = 'OVERSA:mark@overstockaccessories.com'
-ftpPass = 'Pampanga@123'
+ftpHost = ''
+ftpUname = ''
+ftpPass = ''
 localFolderPath = os.path.expanduser("~/Desktop")
 remoteFolder = "/Reports"
 substring = "Flag Description"  # Specify the substring to filter files
