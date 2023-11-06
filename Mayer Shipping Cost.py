@@ -99,24 +99,37 @@ def Transform_1():
         description = str(row['Description']).strip()
         ltl = str(row['LTL']).lower().strip() == 'false'
         oversize = str(row['Oversize']).lower().strip() == 'no'
+        oversize2 = str(row['Oversize']).lower().strip() == 'yes'
         addtl_handling_charge = str(row['Addtl Handling Charge']).lower().strip() == 'no'
-        kit = 'kit' in description.lower()
+        addtl_handling_charge2 = str(row['Addtl Handling Charge']).lower().strip() == 'yes'
+        kit = '(kit)' in description.lower()
+    
+        
 
         if row['Your Price'] < 250:
-            base = 10 if ltl else 5 + 200
+            base = 10 if ltl else 5 + 200 
             oversize = 0 if oversize else 70
             addtl = 0 if addtl_handling_charge else 5
             kit = 10 if kit else 0
+            if oversize2 and addtl_handling_charge2 and ltl:
+                return base + 70
+
         elif row['Your Price'] >= 500:
-            base = 20 if ltl else 20 + 200
+            base = 25 if ltl else 20 + 200 
             oversize = 0 if oversize else 70
             addtl = 0 if addtl_handling_charge else 5
             kit = 25 if kit else 0
+            if oversize2 and addtl_handling_charge2 and ltl:
+                return base + 70
+
         else:
             base = 15 if ltl else 10 + 200
             oversize = 0 if oversize else 70
-            addtl = 0 if addtl_handling_charge else 5
+            addtl = 0 if addtl_handling_charge else 5 
             kit = 15 if kit else 0
+            if oversize2 and addtl_handling_charge2 and ltl:
+                return base + 70
+
 
         return base + oversize + addtl + kit
 
