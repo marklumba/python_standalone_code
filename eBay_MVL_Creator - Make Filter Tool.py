@@ -105,7 +105,8 @@ def Transform_1():
             'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
             'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
             'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
-            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian'
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian',
+            'Lucid', 'Polestar'
              ]
 
             # Filter "Make" column based on the valid makes list
@@ -163,7 +164,8 @@ def Transform_2():
             'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
             'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
             'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
-            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian'
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian',
+            'Lucid', 'Polestar'
              ]
 
             # Filter "Make" column based on the valid makes list
@@ -210,6 +212,24 @@ def Transform_3():
 
             # Delete all years and rows of data before i.e. 2000.
             df = df[df["Year"].between(2000, 2024)]
+
+            # Define a list of valid makes
+            valid_makes = [
+            'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+            'Cadillac', 'Chevrolet', 'Chrysler', 'Daihatsu', 'Dodge', 'Eagle', 'Ferrari',
+            'Fiat', 'Ford', 'Freightliner', 'Genesis', 'Geo', 'GMC', 'Hino', 'Honda',
+            'Hummer', 'Hyundai', 'INFINITI', 'Isuzu', 'Jaguar', 'Jeep', 'Kenworth', 'Kla',
+            'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Mack', 'Maserati',
+            'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
+            'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
+            'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian',
+            'Lucid', 'Polestar'
+             ]
+            
+            # Filter "Make" column based on the valid makes list
+            df = df[df['Make'].isin(valid_makes)]
+
 
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "eBay_Master_Vehicle_List_2000.xlsx")
@@ -263,7 +283,8 @@ def Transform_4():
             'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
             'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
             'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
-            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian'
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian',
+            'Lucid', 'Polestar'
              ]
 
             # Filter "Make" column based on the valid makes list
@@ -330,7 +351,8 @@ def Transform_5():
             'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
             'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
             'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
-            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian'
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian',
+            'Lucid', 'Polestar'
              ]
 
             # Filter "Make" column based on the valid makes list
@@ -388,7 +410,8 @@ def Transform_6():
             'Mazda', 'Mercedes-Benz', 'Mercury', 'Mini', 'Mitsubishi', 'Mobility Ventures',
             'Nissan', 'Oldsmobile', 'Peterbilt', 'Plymouth', 'Pontiac', 'Porsche', 'Ram',
             'Saab', 'Saturn', 'Scion', 'Smart', 'Sterling Truck', 'Subaru', 'Suzuki',
-            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian'
+            'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'VPG', 'Western Star', 'Rivian',
+            'Lucid', 'Polestar'
              ]
 
             # Filter "Make" column based on the valid makes list
