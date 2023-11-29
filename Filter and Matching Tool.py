@@ -8,7 +8,8 @@ import xlwings as xw
 from datetime import datetime
 import customtkinter
 import datetime
-
+from collections import defaultdict
+import re
 
 # Declare df1 and df2 as global variables
 df1 = None
@@ -29,7 +30,7 @@ customtkinter.set_default_color_theme("blue")
 root = customtkinter.CTk()
 root.title("Filter and Matching Tool")
 
-root.geometry("650x650") # set the root dimensions
+root.geometry("900x650") # set the root dimensions
 root.pack_propagate(False) # tells the root to not let the widgets inside it determine its size.
 root.resizable(0, 0) # makes the root window fixed in size.
 
@@ -172,10 +173,8 @@ def read_data_2():
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
-
-
-
     
+
 def read_data_3():
     """If the file selected is valid this will load the file into the Treeview"""
     global df3  # Declare df as global to update it
@@ -261,9 +260,6 @@ def read_data_3():
         return None
 
 
-
-
-
 def read_data_4():
     global df3  # Declare df as global to update it
     
@@ -288,66 +284,86 @@ def read_data_4():
             df3 = pd.read_excel(latest_file_path)
 
         # Filter data based on specified conditions
-        formatted_data = {}
-        years_by_part_number = {}
-
-        for _, row in df3.iterrows():
-            if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
-                'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
-                'DisplayName',
-                'Drive Type', 'Engine',
-                'Engine - Block Type', 'Engine - CC',
-                'Engine - CID', 'Engine - Cylinders',
-                'Engine - Liter_Display', 'Fuel Type Name',
-                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel',
-                'Trim'
-            ]):
-                years_by_part_number.setdefault(row['PartNumber'], []).append(row['Year'])
-
-        for part_number, years in years_by_part_number.items():
-            year_range = f"{min(years)}-{max(years)}" if years else "No valid years found"
-            years_by_part_number[part_number] = year_range
-
-        for _, row in df3.iterrows():
-            if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
-                'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
-                'DisplayName',
-                'Drive Type', 'Engine',
-                'Engine - Block Type', 'Engine - CC',
-                'Engine - CID', 'Engine - Cylinders',
-                'Engine - Liter_Display', 'Fuel Type Name',
-                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel',
-                'Trim'
-            ]):
-                formatted_string = f"{years_by_part_number[row['PartNumber']]}|{row['Make']}|{row['Model']}::{row['Notes']}"
-                lines = formatted_string.split('^^')
-                first_unique_line = lines[0]
-
-                if row['PartNumber'] not in formatted_data:
-                    formatted_data[row['PartNumber']] = first_unique_line
-
-            elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']):
-                formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
-
-                if row['PartNumber'] not in formatted_data:
-                    formatted_data[row['PartNumber']] = formatted_row
-                else:
-                    formatted_data[row['PartNumber']] += '^^' + formatted_row
+        years_by_part_make_model = {}
         
-        # Sort the dictionary by key (i.e., 'PartNumber') in ascending order
-        formatted_data = dict(sorted(formatted_data.items()))
+        for _, row in df3.iterrows():
+            if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
+                'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
+                'DisplayName', 'Drive Type', 'Engine',
+                'Engine - Block Type', 'Engine - CC',
+                'Engine - CID', 'Engine - Cylinders',
+                'Engine - Liter_Display', 'Fuel Type Name',
+                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel',
+                'Trim'
+            ]):
+                combined_key = (row['PartNumber'], row['Make'], row['Model'])
+                years_by_part_make_model.setdefault(combined_key, []).append(row['Year'])
+        
+        for key, years in years_by_part_make_model.items():
+           if len(set(years)) == 1:  # Check if all years are the same
+              year = years[0]
+              years_by_part_make_model[key] = year
+           else:
+              year_range = f"{min(years)}-{max(years)}" if years else "No valid years found"
+              years_by_part_make_model[key] = year_range
 
-        # Convert the dictionary to a list of strings
-        final_text_list = [f"{part_number}\tUNSHIPPED\t{data}" for part_number, data in formatted_data.items()]
+        formatted_data = defaultdict(str)
+
+        for _, row in df3.iterrows():
+            if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
+                'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
+                'DisplayName', 'Drive Type', 'Engine',
+                'Engine - Block Type', 'Engine - CC',
+                'Engine - CID', 'Engine - Cylinders',
+                'Engine - Liter_Display', 'Fuel Type Name',
+                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel',
+                'Trim'
+            ]): 
+                
+                combined_key = (row['PartNumber'], row['Make'], row['Model'])
+                formatted_string = f"{years_by_part_make_model.get(combined_key, 'No valid years found')}|{row['Make']}|{row['Model']}::{row['Notes']}"
+                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
+                formatted_data[key] = formatted_string
+                          
+            else:
+                formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
+                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
+                formatted_data[key] += '^^' + formatted_row
+                
+                                                                               
+        # Sort the dictionary by key (i.e., 'PartNumber') in ascending order
+        formatted_data = dict(sorted(formatted_data.items(), key=lambda item: item[1], reverse=False))
+
+        final_text_list = []
+
+        # Group the fitment data by Inventory Number
+        fitment_by_inventory_number = {}
+        for part_number, data in formatted_data.items():
+            if isinstance(part_number, str):
+               inventory_number = part_number.split('_')[0]
+               fitment_by_inventory_number.setdefault(inventory_number, []).append(data)
+
+        # Create the final text list with fitment data grouped by Inventory Number
+        for inventory_number, fitments in fitment_by_inventory_number.items():
+            fitment_string = '^^'.join(fitments)
+            final_text_list.append(f"{inventory_number}\tUNSHIPPED\t{fitment_string}")
+
+
+        # Sort the list of strings by the part number
+        final_text_list.sort() 
+        
+        # Remove the element '^^^^' and replace with '^^'
+        final_text_list = [s.replace('^^^^', '^^') for s in final_text_list]
+
+        # Remove the element '^^' at the beginning of string text fitment
+        final_text_list = [re.sub(r'UNSHIPPED\s\^\^', 'UNSHIPPED\t', s) for s in final_text_list] 
 
         # Join the list of strings with '\n' as the delimiter to create the final text
-        final_text = '\n'.join(final_text_list)
+        final_text = "Inventory Number\tQuantity Update Type\ta2Listing Fitment\n" + '\n'.join(final_text_list)
 
-        # Add a header to the final text
-        final_text = "Inventory Number\tQuantity Update Type\ta2Listing Fitment\n" + final_text
-
+        # Suppose final_text and final_text_list are defined earlier in your code
         final_text = final_text.replace("nan", "")
-        
+            
         # Show "Complete" message when the function is done
         messagebox.showinfo("CA eBay Compatibility", "Compatibility Complete")
         
@@ -365,7 +381,6 @@ def read_data_4():
         messagebox.showerror("Error", f"The file you have chosen is invalid")
     except FileNotFoundError:
         messagebox.showerror("Error", f"No such file as {latest_file_path}")
-
 
 
 def pre_filter_eBay_MVL_File(df1, df2):
@@ -409,7 +424,7 @@ def pre_filter_eBay_MVL_File(df1, df2):
         filtered_df3 = filtered_df3.drop_duplicates()
 
         # Generate the current date and time as a string
-        current_datetime = datetime.now().strftime("%Y-%m-%d")
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # Define the output file name with the date and time
         output_file_name = f"FilterMVLFile_Output_{current_datetime}.xlsx"
@@ -572,7 +587,7 @@ def run_matching_filter(df1, df2):
         filtered_df2 = filtered_df2.drop_duplicates()
 
         # Generate the current date and time as a string
-        current_datetime = datetime.now().strftime("%Y-%m-%d") 
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # Define the output file name with the date and time
         output_file_name = f"RunFilter_Output_{current_datetime}.xlsx"
