@@ -54,9 +54,9 @@ def downloadLatestFileFromFtp(localFolderPath, ftpHost, ftpUname, ftpPass, remot
 print("execution complete...")
 
 # Usage credentials
-ftpHost = 'box.cloudtb.com'
-ftpUname = 'matt'
-ftpPass = 'HY83jXHGY9ngAC'
+ftpHost = ''
+ftpUname = ''
+ftpPass = ''
 localFolderPath = os.path.expanduser("~/Desktop")
 remoteFolder = '/OSA/ChannelAdvisor/AutomatedExports'
 substring = 'productnamebympn.xlsx'  # Specify the substring to filter files
