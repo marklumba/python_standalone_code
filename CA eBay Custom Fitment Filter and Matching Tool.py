@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -699,10 +698,10 @@ def run_matching_filter_2(df1, df2):
         if not filtered_dfs:
            messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
            return
-        
+                
         # Concatenate all filtered DataFrames to produce the final result
         filtered_df = pd.concat(filtered_dfs)
-
+       
         # List of columns to retain
         columns_to_retain = ['Year', 'Model', 'Make', 'PartNumber', 'Notes']
 
@@ -713,6 +712,7 @@ def run_matching_filter_2(df1, df2):
 
         # Add this line to sort 'Year' column in descending order
         filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+     
 
         # Define a function to process the remaining data
         def process_remaining_data(remaining_data, df2):
@@ -751,17 +751,26 @@ def run_matching_filter_2(df1, df2):
                 # Add "PartNumber" and "Notes" columns for each filtered row
                 filtered_rows_2['PartNumber'] = row.get('PartNumber', '')
                 filtered_rows_2['Notes'] = row.get('Notes', '')
-
+   
                 # Append the filtered DataFrame to the list
                 filtered_dfs2.append(filtered_rows_2)
 
+            # Concatenate all filtered DataFrames for remaining_data
+            if filtered_dfs2:  # Check if filtered_dfs2 is not empty
+               filtered_dfs2 = pd.concat(filtered_dfs2)
+            else:
+               filtered_dfs2 = pd.DataFrame()
 
-            # Concatenate all filtered DataFrames to produce the final result
-            filtered_dfs2 = pd.concat(filtered_dfs2)
-
-            # Concatenate the results from special condition and remaining data
-            final_result = pd.concat([filtered_df, filtered_dfs2])
-
+            if filtered_df.empty and filtered_dfs2.empty:
+               print("Both DataFrames are empty")
+               # return or error handling
+            elif filtered_df.empty: 
+               final_result = filtered_dfs2 
+            elif filtered_dfs2.empty:
+               final_result = filtered_df
+            else:
+              final_result = pd.concat([filtered_df, filtered_dfs2])
+           
             # Generate the current date and time as a string
             current_datetime = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -802,11 +811,8 @@ def run_matching_filter_2(df1, df2):
     
     else:
         #print("No Fits All, User Run Matching Filter")
-        messagebox.showinfo("Error", "No Fits All, User Run Matching Filter")
+        messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
         return
-
-
-
 
 root.mainloop()
 
