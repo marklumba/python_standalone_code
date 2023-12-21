@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -355,6 +354,7 @@ def read_data_4():
         
         # Remove the element '^^^^' and replace with '^^'
         final_text_list = [s.replace('^^^^', '^^') for s in final_text_list]
+        
 
         # Remove the element '^^' at the beginning of string text fitment
         final_text_list = [re.sub(r'UNSHIPPED\s\^\^', 'UNSHIPPED\t', s) for s in final_text_list] 
@@ -363,7 +363,7 @@ def read_data_4():
         final_text = "Inventory Number\tQuantity Update Type\ta2Listing Fitment\n" + '\n'.join(final_text_list)
 
         # Suppose final_text and final_text_list are defined earlier in your code
-        final_text = final_text.replace("nan", "")
+        final_text = final_text.replace("::nan", "")
             
         # Show "Complete" message when the function is done
         messagebox.showinfo("CA eBay Compatibility", "Compatibility Complete")
