@@ -668,8 +668,6 @@ def run_matching_filter(df1, df2):
     return filtered_df2
 
 
-
-
 def run_matching_filter_2(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
                                  
@@ -722,7 +720,7 @@ def run_matching_filter_2(df1, df2):
                 'Engine - Block Type', 'Engine - Cylinders',
                 'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID'
             ]
-
+            
             for column in columns_to_filter:
                 value = row[column]
                 if pd.notna(value):
@@ -742,13 +740,11 @@ def run_matching_filter_2(df1, df2):
             # Append the filtered DataFrame to the list
             filtered_dfs.append(filtered_rows)
 
-        # Check if there are no objects to concatenate
-        # if not filtered_dfs:
-        #    messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
-        #    return
-                
-        # Concatenate all filtered DataFrames to produce the final result
-        filtered_df = pd.concat(filtered_dfs)
+        if filtered_dfs:
+            filtered_df = pd.concat(filtered_dfs)
+        else:
+            filtered_df = pd.DataFrame()
+
        
         # List of columns to retain
         columns_to_retain = ['Year', 'Model', 'Make', 'PartNumber', 'Notes']
@@ -759,8 +755,13 @@ def run_matching_filter_2(df1, df2):
                 filtered_df[column] = ''
 
         # Add this line to sort 'Year' column in descending order
-        filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
-     
+        # filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+                
+        # Add this line to check if 'PartNumber' column exists before sorting
+        if 'PartNumber' in filtered_df.columns:
+            # Add this line to sort 'Year' column in descending order
+            filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+
 
         # Define a function to process the remaining data
         def process_remaining_data(remaining_data, df2):
@@ -891,7 +892,7 @@ def run_matching_filter_2(df1, df2):
         
     
     else:
-        #print("No Fits All, User Run Matching Filter")
+        print("No Fits All, User Run Matching Filter")
         #messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
         return
 
