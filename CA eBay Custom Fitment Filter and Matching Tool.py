@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -5,10 +6,11 @@ from tkinter import messagebox
 import os
 import xlwings as xw
 from datetime import datetime
-import customtkinter
 import datetime
+import customtkinter
 from collections import defaultdict
 import re
+
 
 # Declare df1 and df2 as global variables
 df1 = None
@@ -27,7 +29,7 @@ customtkinter.set_default_color_theme("blue")
 
 # initalise the tkinter GUI
 root = customtkinter.CTk()
-root.title("CA eBay Custom Fitment Filter and Matching Tool")
+root.title("CA eBay Single Year Column Fitment Filter and Matching Tool")
 
 root.geometry("900x650") # set the root dimensions
 root.pack_propagate(False) # tells the root to not let the widgets inside it determine its size.
@@ -41,6 +43,7 @@ file_frame.place(height=200, width=800, rely=0.65, relx=0.01)
 
 file_frame1 = tk.LabelFrame(root, text="Display File", bg="lightgrey", fg="black", font=("Arial", 12, "bold"))
 file_frame1.place(height=200, width=800, rely=0.30, relx=0.01)
+
 
 # Buttons
 button1 = customtkinter.CTkButton(file_frame, text="Select Custom Fitment File", command=lambda: file_dialog_1(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
@@ -100,7 +103,6 @@ def file_dialog_2():
     file_path_2 = filename  # Update the global variable
     return None
 
-
 def read_data_1():
     """If the file selected is valid this will load the file into the Treeview"""
     global df1  # Declare df as global to update it
@@ -109,8 +111,12 @@ def read_data_1():
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
             df1 = pd.read_csv(excel_filename)
+        elif excel_filename[-5:] == ".xlsb":
+            df1 = pd.read_excel(excel_filename, engine='pyxlsb')
         else:
-            df1 = pd.read_excel(excel_filename)
+            df1 = pd.read_excel(excel_filename, engine='openpyxl')
+           
+
 
             # Convert only specific columns to object
             columns_to_convert_to_object = ['Make', 'Model', 'Submodel',
@@ -121,14 +127,13 @@ def read_data_1():
             
             # Convert the [NumDoors] data type into float
             df1['NumDoors'] = df1['NumDoors'].astype(float)
+            
+            # Convert the [Year] data type into int
+            df1['Year'] = df1['Year'].astype('int64')
 
-            # Check the data types of the DataFrame
-            print(df1.dtypes)
-   
-        print(df1.head(5))
 
         # Show "Complete" message when the function is done
-        messagebox.showinfo("Read and Save", "completed successfully")
+        messagebox.showinfo("Read and Save", "completed successfully!")
         
     # Handling error
     except ValueError:
@@ -139,7 +144,8 @@ def read_data_1():
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
-    
+
+
 def read_data_2():
     """If the file selected is valid this will load the file into the Treeview"""
     global df2  # Declare df as global to update it
@@ -148,20 +154,19 @@ def read_data_2():
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
             df2 = pd.read_csv(excel_filename)
+        elif excel_filename[-5:] == ".xlsb":
+            df2 = pd.read_excel(excel_filename, engine='pyxlsb')
+            
         else:
-            df2 = pd.read_excel(excel_filename)
+            df2 = pd.read_excel(excel_filename, engine='openpyxl')
 
             # Convert the numeric columns to str
             numeric_columns = ['Engine - CC', 'Engine - CID', 'Engine - Cylinders', 'NumDoors']
-            df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce')
+            df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce')   
 
-            print(df2.dtypes)
-       
-        print(df2.head(5))
-        print(df2.dtypes)
 
         # Show "Complete" message when the function is done
-        messagebox.showinfo("Read and Save", "completed successfully")
+        messagebox.showinfo("Read and Save", "completed successfully!")
     
     # Handling error
     except ValueError:
@@ -173,7 +178,6 @@ def read_data_2():
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
     
-
 def read_data_3():
     """If the file selected is valid this will load the file into the Treeview"""
     global df3  # Declare df as global to update it
@@ -201,8 +205,6 @@ def read_data_3():
             df3 = pd.read_csv(latest_file_path)
         else:
             df3 = pd.read_excel(latest_file_path)
-
-            print(df3.head(5))
 
             # Initialize an empty dictionary to store the formatted strings
             formatted_data = {}
@@ -236,7 +238,7 @@ def read_data_3():
             print(final_text)
 
             # Show "Complete" message when the function is done
-            messagebox.showinfo("CA eBay Compatibility", "Compatibilty Complete")
+            messagebox.showinfo("CA eBay Compatibility", "Compatibilty Complete!")
 
             # Define the output file name
             output_file_name = "FitmentOutput.txt"
@@ -257,7 +259,7 @@ def read_data_3():
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {latest_file_path}")
         return None
-
+    
 
 def read_data_4():
     global df3  # Declare df as global to update it
@@ -353,6 +355,7 @@ def read_data_4():
         
         # Remove the element '^^^^' and replace with '^^'
         final_text_list = [s.replace('^^^^', '^^') for s in final_text_list]
+        
 
         # Remove the element '^^' at the beginning of string text fitment
         final_text_list = [re.sub(r'UNSHIPPED\s\^\^', 'UNSHIPPED\t', s) for s in final_text_list] 
@@ -361,7 +364,7 @@ def read_data_4():
         final_text = "Inventory Number\tQuantity Update Type\ta2Listing Fitment\n" + '\n'.join(final_text_list)
 
         # Suppose final_text and final_text_list are defined earlier in your code
-        final_text = final_text.replace("nan", "")
+        final_text = final_text.replace("::nan", "")
             
         # Show "Complete" message when the function is done
         messagebox.showinfo("CA eBay Compatibility", "Compatibility Complete")
@@ -381,24 +384,17 @@ def read_data_4():
     except FileNotFoundError:
         messagebox.showerror("Error", f"No such file as {latest_file_path}")
 
-
+    
 def pre_filter_eBay_MVL_File(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
         filtered_dfs = []  # List to store filtered DataFrames
        
         for _, row in df1.iterrows():
-            year_beg = row['Year Beg']
-            year_end = row['Year End']
-
-            # Custom range filter for the "Year" column
-            range_filter = (df2['Year'] >= year_beg) & (df2['Year'] <= year_end)
-            
-
             # Initialize a boolean mask for the custom column filters
             column_filters = pd.Series(True, index=df2.index)
 
             # Iterate through the specified columns in df1
-            columns_to_filter = ['Make', 'Model']
+            columns_to_filter = ['Year', 'Make', 'Model']
 
             for column in columns_to_filter:
                 value = row[column]
@@ -406,12 +402,8 @@ def pre_filter_eBay_MVL_File(df1, df2):
                     # Custom column filter
                     column_filters &= (df2[column].astype(str) == str(value))
                     
-      
-            # Combine the custom range filter and column filters
-            combined_filter = range_filter & column_filters
-
             # Filtered rows in df2 for this row in df1
-            filtered_rows = df2.loc[combined_filter].copy()  # Use .copy() to avoid SettingWithCopyWarning
+            filtered_rows = df2.loc[column_filters].copy()  # Use .copy() to avoid SettingWithCopyWarning
 
             # Append the filtered DataFrame to the list
             filtered_dfs.append(filtered_rows)
@@ -423,7 +415,7 @@ def pre_filter_eBay_MVL_File(df1, df2):
         filtered_df3 = filtered_df3.drop_duplicates()
 
         # Generate the current date and time as a string
-        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_datetime = datetime.now().strftime("%Y-%m-%d")
 
         # Define the output file name with the date and time
         output_file_name = f"FilterMVLFile_Output_{current_datetime}.xlsx"
@@ -538,19 +530,13 @@ def run_matching_filter(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
         filtered_dfs = []  # List to store filtered DataFrames
 
-        for index, row in df1.iterrows():
-            year_beg = row['Year Beg']
-            year_end = row['Year End']
-
-            # Custom range filter for the "Year" column
-            range_filter = (df2['Year'] >= year_beg) & (df2['Year'] <= year_end)
-
+        for _, row in df1.iterrows():
             # Initialize a boolean mask for the custom column filters
             column_filters = pd.Series(True, index=df2.index)
 
             # Iterate through the specified columns in df1
             columns_to_filter = [
-                'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
+                'Year', 'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
                 'Drive Type', 'Engine - Liter_Display', 'Engine - CC',
                 'Engine - Block Type', 'Engine - Cylinders', 'Fuel Type Name',
                 'Cylinder Type Name', 'Aspiration', 'Engine - CID'
@@ -561,13 +547,9 @@ def run_matching_filter(df1, df2):
                 if pd.notna(value):
                     # Custom column filter
                     column_filters &= (df2[column].astype(str) == str(value))
-                    
-                  
-            # Combine the custom range filter and column filters
-            combined_filter = range_filter & column_filters
 
             # Filtered rows in df2 for this row in df1
-            filtered_rows = df2.loc[combined_filter].copy()  # Use .copy() to avoid SettingWithCopyWarning
+            filtered_rows = df2.loc[column_filters].copy()  # Use .copy() to avoid SettingWithCopyWarning
 
             # Add "PartNumber" and "Notes" columns for each filtered row
             filtered_rows['PartNumber'] = row.get('PartNumber', '')
@@ -592,7 +574,7 @@ def run_matching_filter(df1, df2):
         output_file_name = f"RunFilter_Output_{current_datetime}.xlsx"
 
         # Show "Complete" message when the function is done
-        messagebox.showinfo("Run Matching Filter", "Filter Complete")
+        messagebox.showinfo("Run Matching Filter", "Filter Complete!")
 
         # Export the filtered data to a new Excel file
         file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
@@ -627,13 +609,12 @@ def run_matching_filter_2(df1, df2):
                                  
         # Initialize a list to store filtered DataFrames
         filtered_dfs = []
-
+        
         # Define the special condition as a separate function
         def is_special_condition(row):
             return (
-                pd.notna(row['PartNumber']) and pd.notna(row['Notes']) and
-                pd.notna(row['Year Beg']) and pd.notna(row['Year End']) and
-                pd.notna(row['Make']) and pd.notna(row['Model']) and
+                pd.notna(row['PartNumber']) and
+                pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and
                 all(pd.isnull(row[col]) for col in [
                     'Submodel', 'Body', 'NumDoors', 'Drive Type',
                     'Engine - Liter_Display', 'Engine - CC',
@@ -642,7 +623,6 @@ def run_matching_filter_2(df1, df2):
                     'Aspiration', 'Engine - CID']
                 )
             )
-        
 
         # Apply the special condition to each row in df1
         special_condition_rows = df1.apply(is_special_condition, axis=1)
@@ -652,24 +632,19 @@ def run_matching_filter_2(df1, df2):
         df1 = df1[~special_condition_rows]
 
         # Process the special_condition_data by selecting only the necessary columns
-        special_condition_data = special_condition_data[['PartNumber', 'Year Beg', 'Year End', 'Make', 'Model', 'Submodel', 'Body', 
+        special_condition_data = special_condition_data[['PartNumber', 'Year', 'Make', 'Model', 'Submodel', 'Body', 
                                                          'NumDoors', 'Drive Type', 'Engine - Liter_Display',
                                                          'Engine - CC', 'Engine - Block Type', 'Engine - Cylinders', 
                                                          'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID', 'Notes' ]]
 
         for _, row in special_condition_data.iterrows():
-            year_beg = row['Year Beg']
-            year_end = row['Year End']
-
-            # Custom range filter for the "Year" column
-            range_filter = (df2['Year'] >= year_beg) & (df2['Year'] <= year_end)
 
             # Initialize a boolean mask for the custom column filters
             column_filters = pd.Series(True, index=df2.index)
 
             # Iterate through the specified columns in df1
             columns_to_filter = [
-                'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
+                'Year', 'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
                 'Drive Type', 'Engine - Liter_Display', 'Engine - CC',
                 'Engine - Block Type', 'Engine - Cylinders',
                 'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID'
@@ -681,11 +656,9 @@ def run_matching_filter_2(df1, df2):
                     # Custom column filter
                     column_filters &= (df2[column].astype(str) == str(value))
 
-            # Combine the custom range filter and column filters
-            combined_filter = range_filter & column_filters
 
             # Filtered rows in df2 for this row in df1
-            filtered_rows = df2.loc[combined_filter].copy()
+            filtered_rows = df2.loc[column_filters].copy()
 
             # Add "PartNumber" and "Notes" columns for each filtered row
             filtered_rows['PartNumber'] = row.get('PartNumber', '')
@@ -698,8 +671,8 @@ def run_matching_filter_2(df1, df2):
         if not filtered_dfs:
            messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
            return
-                
-        # Concatenate all filtered DataFrames to produce the final result
+
+        # Concatenate all filtered DataFrames to produce the final result        
         filtered_df = pd.concat(filtered_dfs)
        
         # List of columns to retain
@@ -713,45 +686,36 @@ def run_matching_filter_2(df1, df2):
         # Add this line to sort 'Year' column in descending order
         filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
      
-
         # Define a function to process the remaining data
         def process_remaining_data(remaining_data, df2):
             filtered_dfs2 = []
 
             for _, row in remaining_data.iterrows():
-                year_beg = row['Year Beg']
-                year_end = row['Year End']
-
-                # Custom range filter for the "Year" column
-                range_filter_2 = (df2['Year'] >= year_beg) & (df2['Year'] <= year_end)
 
                 # Initialize a boolean mask for the custom column filters
                 column_filters_2 = pd.Series(True, index=df2.index)
 
                 # Iterate through the specified columns in df1
                 columns_to_filter_2 = [
-                    'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
+                    'Year', 'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
                     'Drive Type', 'Engine - Liter_Display', 'Engine - CC',
                     'Engine - Block Type', 'Engine - Cylinders',
                     'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID'
                 ]
-
+          
                 for column in columns_to_filter_2:
                     value = row[column]
                     if pd.notna(value):
                         # Custom column filter
                         column_filters_2 &= (df2[column].astype(str) == str(value))
 
-                # Combine the custom range filter and column filters
-                combined_filter_2 = range_filter_2 & column_filters_2
-
                 # Filtered rows in df2 for this row in df1
-                filtered_rows_2 = df2.loc[combined_filter_2].copy()
+                filtered_rows_2 = df2.loc[column_filters_2].copy()
 
                 # Add "PartNumber" and "Notes" columns for each filtered row
                 filtered_rows_2['PartNumber'] = row.get('PartNumber', '')
                 filtered_rows_2['Notes'] = row.get('Notes', '')
-   
+     
                 # Append the filtered DataFrame to the list
                 filtered_dfs2.append(filtered_rows_2)
 
@@ -759,7 +723,7 @@ def run_matching_filter_2(df1, df2):
             if filtered_dfs2:  # Check if filtered_dfs2 is not empty
                filtered_dfs2 = pd.concat(filtered_dfs2)
             else:
-               filtered_dfs2 = pd.DataFrame()
+               filtered_dfs2 = pd.DataFrame() # Return empty DataFrame
 
             if filtered_df.empty and filtered_dfs2.empty:
                print("Both DataFrames are empty")
@@ -769,8 +733,8 @@ def run_matching_filter_2(df1, df2):
             elif filtered_dfs2.empty:
                final_result = filtered_df
             else:
-              final_result = pd.concat([filtered_df, filtered_dfs2])
-           
+               final_result = pd.concat([filtered_df, filtered_dfs2])
+            
             # Generate the current date and time as a string
             current_datetime = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -781,7 +745,7 @@ def run_matching_filter_2(df1, df2):
             messagebox.showinfo("Run Matching Filter", "Filter Complete")
 
             # Add this line to sort 'Year' column in descending order
-            final_result = final_result.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+            final_result = final_result.sort_values(by=['PartNumber', 'Year'], ascending=[True, False])
 
             # Export the filtered data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
@@ -810,11 +774,8 @@ def run_matching_filter_2(df1, df2):
         process_remaining_data(df1, df2)        
     
     else:
-        #print("No Fits All, User Run Matching Filter")
-        messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
+        print("No Fits All, User Run Matching Filter")
         return
 
 root.mainloop()
-
-
 
