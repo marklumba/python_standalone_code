@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -110,13 +111,10 @@ def read_data_1():
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
             df1 = pd.read_csv(excel_filename)
-        elif excel_filename[-5:] == ".xlsb":
-            df1 = pd.read_excel(excel_filename, engine='pyxlsb')
         else:
-            df1 = pd.read_excel(excel_filename, engine='openpyxl')
+            df1 = pd.read_excel(excel_filename)
            
-
-
+           
             # Convert only specific columns to object
             columns_to_convert_to_object = ['Make', 'Model', 'Submodel',
                 'Body', 'Drive Type', 'Engine - Block Type', 'Engine - Liter_Display',
@@ -126,9 +124,12 @@ def read_data_1():
             
             # Convert the [NumDoors] data type into float
             df1['NumDoors'] = df1['NumDoors'].astype(float)
-            
-            # Convert the [Year] data type into int
-            df1['Year'] = df1['Year'].astype('int64')
+
+            # Convert the [Year] data type into Int64
+            df1['Year'] = pd.to_numeric(df1['Year'], errors='coerce')
+            df1['Year'] = df1['Year'].astype('Int64')
+
+            print(df1.dtypes)
 
 
         # Show "Complete" message when the function is done
@@ -153,17 +154,15 @@ def read_data_2():
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
             df2 = pd.read_csv(excel_filename)
-        elif excel_filename[-5:] == ".xlsb":
-            df2 = pd.read_excel(excel_filename, engine='pyxlsb')
-            
         else:
-            df2 = pd.read_excel(excel_filename, engine='openpyxl')
+            df2 = pd.read_excel(excel_filename)
 
             # Convert the numeric columns to str
             numeric_columns = ['Engine - CC', 'Engine - CID', 'Engine - Cylinders', 'NumDoors']
-            df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce')   
+            df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce') 
 
 
+        print(df2.dtypes)
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully!")
     
@@ -259,7 +258,6 @@ def read_data_3():
         messagebox.showerror("Error", f"No such file as {latest_file_path}")
         return None
     
-
 def read_data_4():
     global df3  # Declare df as global to update it
     
@@ -285,6 +283,7 @@ def read_data_4():
 
         # Filter data based on specified conditions
         years_by_part_make_model = {}
+        years_by_part_make_model_trim = {}
         
         for _, row in df3.iterrows():
             if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
@@ -298,7 +297,20 @@ def read_data_4():
             ]):
                 combined_key = (row['PartNumber'], row['Make'], row['Model'])
                 years_by_part_make_model.setdefault(combined_key, []).append(row['Year'])
-        
+
+            elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['Trim']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
+                'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
+                'DisplayName', 'Drive Type', 'Engine',
+                'Engine - Block Type', 'Engine - CC',
+                'Engine - CID', 'Engine - Cylinders',
+                'Engine - Liter_Display', 'Fuel Type Name',
+                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel'
+                
+            ]):
+                combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'])
+                years_by_part_make_model_trim.setdefault(combined_key, []).append(row['Year'])
+
+        # Iterate the year in the dict in years_by_part_make_model
         for key, years in years_by_part_make_model.items():
            if len(set(years)) == 1:  # Check if all years are the same
               year = years[0]
@@ -307,6 +319,15 @@ def read_data_4():
               year_range = f"{min(years)}-{max(years)}" if years else "No valid years found"
               years_by_part_make_model[key] = year_range
 
+        # Iterate the year in the dict in years_by_part_make_model_trim
+        for key, years in years_by_part_make_model_trim.items():
+           if len(set(years)) == 1:  # Check if all years are the same
+              year = years[0]
+              years_by_part_make_model_trim[key] = year
+           else:
+              year_range = f"{min(years)}-{max(years)}" if years else "No valid years found"
+              years_by_part_make_model_trim[key] = year_range
+        
         formatted_data = defaultdict(str)
 
         for _, row in df3.iterrows():
@@ -324,13 +345,26 @@ def read_data_4():
                 formatted_string = f"{years_by_part_make_model.get(combined_key, 'No valid years found')}|{row['Make']}|{row['Model']}::{row['Notes']}"
                 key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
                 formatted_data[key] = formatted_string
+                
+            
+            elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['Trim']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
+                'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
+                'DisplayName', 'Drive Type', 'Engine',
+                'Engine - Block Type', 'Engine - CC',
+                'Engine - CID', 'Engine - Cylinders', 
+                'Engine - Liter_Display', 'Fuel Type Name',
+                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel'              
+            ]): 
+                combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'])
+                formatted_string = f"{years_by_part_make_model_trim.get(combined_key, 'No valid years found')}|{row['Make']}|{row['Model']}|{row['Trim']}::{row['Notes']}"
+                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}_{row['Trim']}"
+                formatted_data[key] = formatted_string
                           
             else:
                 formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
                 key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
                 formatted_data[key] += '^^' + formatted_row
-                
-                                                                               
+                                                                                
         # Sort the dictionary by key (i.e., 'PartNumber') in ascending order
         formatted_data = dict(sorted(formatted_data.items(), key=lambda item: item[1], reverse=False))
 
@@ -348,10 +382,13 @@ def read_data_4():
             fitment_string = '^^'.join(fitments)
             final_text_list.append(f"{inventory_number}\tUNSHIPPED\t{fitment_string}")
 
-
-        # Sort the list of strings by the part number
-        final_text_list.sort() 
+        # Define a function to extract the number from the 'Inventory Number'
+        def get_inventory_number(s):
+           return int(s.split('\t')[0].split('-')[1])
         
+        # Sort the list based on the inventory number
+        final_text_list.sort(key=get_inventory_number)
+
         # Remove the element '^^^^' and replace with '^^'
         final_text_list = [s.replace('^^^^', '^^') for s in final_text_list]
         
@@ -665,14 +702,19 @@ def run_matching_filter_2(df1, df2):
 
             # Append the filtered DataFrame to the list
             filtered_dfs.append(filtered_rows)
+               
+        if filtered_dfs:
+            filtered_df = pd.concat(filtered_dfs)
+        else:
+            filtered_df = pd.DataFrame()
 
-        # Check if there are no objects to concatenate
-        if not filtered_dfs:
-           messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
-           return
+        # # Check if there are no objects to concatenate
+        # if not filtered_dfs:
+        #    messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
+        #    return
 
         # Concatenate all filtered DataFrames to produce the final result        
-        filtered_df = pd.concat(filtered_dfs)
+        #filtered_df = pd.concat(filtered_dfs)
        
         # List of columns to retain
         columns_to_retain = ['Year', 'Model', 'Make', 'PartNumber', 'Notes']
@@ -683,8 +725,14 @@ def run_matching_filter_2(df1, df2):
                 filtered_df[column] = ''
 
         # Add this line to sort 'Year' column in descending order
-        filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
-     
+        # filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+        
+        # Add this line to check if 'PartNumber' column exists before sorting
+        if 'PartNumber' in filtered_df.columns:
+            # Add this line to sort 'Year' column in descending order
+            filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
+
+
         # Define a function to process the remaining data
         def process_remaining_data(remaining_data, df2):
             filtered_dfs2 = []
@@ -694,13 +742,31 @@ def run_matching_filter_2(df1, df2):
                 # Initialize a boolean mask for the custom column filters
                 column_filters_2 = pd.Series(True, index=df2.index)
 
-                # Iterate through the specified columns in df1
-                columns_to_filter_2 = [
-                    'Year', 'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
-                    'Drive Type', 'Engine - Liter_Display', 'Engine - CC',
-                    'Engine - Block Type', 'Engine - Cylinders',
-                    'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID'
+                # Check if any of the combinations are present in df1
+                combinations = [
+                   ['Make', 'Model', 'Submodel'],
+                   ['Make', 'Model', 'Body'],
+                   ['Make', 'Model', 'NumDoors'],
+                   ['Make', 'Model', 'Submodel', 'Body', 'NumDoors']
                 ]
+                combination_present = any(all(pd.notna(row[c]) for c in combo) for combo in combinations)
+
+                # Check if any other fields are present
+                other_fields = ['Drive Type', 'Engine - Liter_Display', 'Engine - CC',
+                                'Engine - Block Type', 'Engine - Cylinders',
+                                'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID']
+                other_fields_present = any(pd.notna(row[c]) for c in other_fields)
+
+
+                # If any of the combinations are present, apply columns_to_retain_2
+                if combination_present:
+                    columns_to_filter_2 = ['Make', 'Model', 'Submodel', 'Body', 'NumDoors']
+                else:
+                    columns_to_filter_2 = ['Make', 'Model', 'Submodel', 'Body', 'NumDoors',
+                                           'Drive Type', 'Engine - Liter_Display', 'Engine - CC',
+                                           'Engine - Block Type', 'Engine - Cylinders',
+                                           'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID']
+
           
                 for column in columns_to_filter_2:
                     value = row[column]
@@ -714,6 +780,17 @@ def run_matching_filter_2(df1, df2):
                 # Add "PartNumber" and "Notes" columns for each filtered row
                 filtered_rows_2['PartNumber'] = row.get('PartNumber', '')
                 filtered_rows_2['Notes'] = row.get('Notes', '')
+
+                # If any of the combinations are present and no other fields are present, apply columns_to_retain_2
+                if combination_present and not other_fields_present:
+
+                    # List of columns to retain
+                   columns_to_retain_2 = ['Trim', 'Year', 'Model', 'Make', 'PartNumber', 'Notes']
+
+                   # Iterate through the DataFrame and set empty values for other columns
+                   for column in filtered_rows_2.columns:
+                       if column not in columns_to_retain_2:
+                          filtered_rows_2[column] = ''
      
                 # Append the filtered DataFrame to the list
                 filtered_dfs2.append(filtered_rows_2)
