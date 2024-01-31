@@ -77,6 +77,10 @@ button8 = ctk.CTkButton(file_frame, text="Check Valid Values", command=lambda: p
                                     text_color='black', font=('Arial', 15, 'bold'))
 button8.place(rely=0.2, relx=0.3)
 
+button9 = ctk.CTkButton(file_frame, text="Check Custom Values", command=lambda: check_custom_values(df2), fg_color='light green', 
+                                    text_color='black', font=('Arial', 15, 'bold'))
+button9.place(rely=0.45, relx=0.3)
+
 # The file/file path text
 label_file = ttk.Label(file_frame, text="No File Selected", background="lightgrey", foreground="blue",
                        font=("Arial", 9, "bold"))
@@ -319,8 +323,11 @@ def Read_data_1():
         else:
             df1 = pd.read_excel(excel_filename)
 
+            #df1 = df1.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
+
+
             # Convert the numeric columns to str
-            numeric_columns = ['Year', 'Engine - CC', 'Engine - CID', 'Engine - Cylinders', 'NumDoors']
+            numeric_columns = ['Engine - CC', 'Engine - CID', 'Engine - Cylinders', 'NumDoors']
             df1[numeric_columns] = df1[numeric_columns].apply(pd.to_numeric, errors='coerce')
 
             print(df1.dtypes)
@@ -354,6 +361,9 @@ def Read_data_2():
             df2 = pd.read_csv(excel_filename)
         else:
             df2 = pd.read_excel(excel_filename)
+
+            #df2 = df2.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
+
         
             # Convert only specific columns to object
             columns_to_convert_to_object = ['Make', 'Model']
@@ -461,6 +471,63 @@ def save_output_to_csv(error_report, filename):
     # Save the DataFrame to a CSV file
     file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
     df.to_csv(file_path, index=False, header=True)
+
+
+
+def check_value(df2):
+    try:
+        if df2 is None:
+            raise ValueError("The dataframe must be provided.")
+
+        invalid_combinations = pd.DataFrame({
+            'Year': [2019, 2020, 2021, 2022, 2023, 2024, 2018],
+            'Make': ['Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Jeep'],
+            'Model': ['1500', '1500', '1500', '1500', '1500', '1500', 'Wrangler']
+        })
+
+        # Ensure 'Year', 'Make', 'Model' columns are in the correct format and strip whitespaces
+        invalid_combinations['Year'] = invalid_combinations['Year'].astype(str).str.strip()
+        invalid_combinations['Make'] = invalid_combinations['Make'].str.strip()
+        invalid_combinations['Model'] = invalid_combinations['Model'].str.strip()
+
+        # Create a combined column in both dataframes
+        df2['combined'] = df2['Year'].astype(str).str.strip() + df2['Make'].str.strip() + df2['Model'].str.strip()
+
+        # Find the exact combinations in df2 that are also in invalid_combinations
+        invalid_df2 = df2[df2[['Year', 'Make', 'Model']].astype(str).apply(lambda x: x.str.strip()).agg(''.join, axis=1).isin(invalid_combinations[['Year', 'Make', 'Model']].agg(''.join, axis=1))]
+
+        if not invalid_df2.empty:
+            return invalid_df2[['Year', 'Make', 'Model']].reset_index().melt(id_vars='index', value_vars=['Year', 'Make', 'Model'], var_name='Column', value_name='Value')
+        else:
+            return None
+    except ValueError as e:
+        raise e
+    
+
+def check_custom_values(df2):
+    try:
+        compatibility = check_value(df2)
+        if compatibility is not None:
+            # Remove duplicate rows based on 'index' column
+            compatibility = compatibility.drop_duplicates(subset=['index'])
+
+            compatibility['Index'] = compatibility['index'].astype(str)
+            compatibility['Value'] = compatibility.apply(lambda row: f"{df2.iloc[row['index']]['Year']} {df2.iloc[row['index']]['Make']} {df2.iloc[row['index']]['Model']}", axis=1)
+            
+            compatibility_str = "\n".join(compatibility['Index'] + "\t" + compatibility['Value'])
+            save_output_to_csv(compatibility_str, 'custom_values_error_report.csv')
+    except ValueError as e:
+        messagebox.showinfo("Error", str(e))
+
+
+def save_output_to_csv(error_report, filename):
+    lines = error_report.split('\n')
+    data = [line.split('\t') for line in lines]
+    df = pd.DataFrame(data, columns=['Index', 'Value'])
+    file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
+    df.to_csv(file_path, index=False, header=True)
+    messagebox.showinfo("Checking", "Complete!")
+
 
 root.mainloop()
 
