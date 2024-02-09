@@ -387,8 +387,16 @@ def read_data_4():
             final_text_list.append(f"{inventory_number}\tUNSHIPPED\t{fitment_string}")
 
         # Define a function to extract the number from the 'Inventory Number'
+        # def get_inventory_number(s):
+        #    return int(s.split('\t')[0].split('-')[1])
+        
+        # Define a function to extract the number from the 'Inventory Number'
         def get_inventory_number(s):
-           return int(s.split('\t')[0].split('-')[1])
+           try:
+              return int(s.split('\t')[0].split('-')[1])
+           except (ValueError, IndexError):
+              return float('inf')  # Return a large value for non-integer inventory numbers
+           
 
         # Sort the list based on the inventory number
         final_text_list.sort(key=get_inventory_number)
@@ -401,7 +409,6 @@ def read_data_4():
 
         # Join the list of strings with '\n' as the delimiter to create the final text
         final_text = "Inventory Number\tQuantity Update Type\ta2Listing Fitment\n" + '\n'.join(final_text_list)
-
 
         # Suppose final_text and final_text_list are defined earlier in your code
         #final_text = final_text.replace("nan", "")
@@ -422,10 +429,16 @@ def read_data_4():
         with open(output_file_path, 'w') as txt_file:
             txt_file.write(final_text)
 
-    except ValueError:
-        messagebox.showerror("Error", f"The file you have chosen is invalid")
+    # except ValueError:
+    #     messagebox.showerror("Error", f"The file you have chosen is invalid")
+    # except FileNotFoundError:
+    #     messagebox.showerror("Error", f"No such file as {latest_file_path}")
+
+    except ValueError as ve:
+         print(f"ValueError: {ve}")
+         messagebox.showerror("Error", f"The file you have chosen is invalid: {ve}")
     except FileNotFoundError:
-        messagebox.showerror("Error", f"No such file as {latest_file_path}")
+         messagebox.showerror("Error", f"No such file as {latest_file_path}")
 
 
 def pre_filter_eBay_MVL_File(df1, df2):
