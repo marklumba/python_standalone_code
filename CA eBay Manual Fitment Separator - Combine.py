@@ -373,9 +373,7 @@ def Read_data_2():
             df2['Year'] = df2['Year'].astype('int64')
 
             print(df2.dtypes)
-       
-        print(df2.head(5))
-        print(df2.dtypes)
+   
 
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully")
@@ -403,7 +401,6 @@ def Check_Compatibility(df2, df1):
     Returns:
         pandas.DataFrame: A DataFrame with details of incompatibility if the dataframes are not compatible, None otherwise.
     """
-    
     try:
         # Check if both dataframes are loaded and not empty.
         if df2 is None or df1 is None:
@@ -427,7 +424,7 @@ def Check_Compatibility(df2, df1):
             # Filter out empty values in df2
             non_empty_values2 = values2[values2 != '']
         
-            # Check if any non-empty value in df1 is not in df2.
+            # Check if any non-empty value in df2 is not in df1.
             if not non_empty_values2.isin(values1).all():
                 incompatible_values = non_empty_values2[~non_empty_values2.isin(values1)]
                 for index, value in incompatible_values.items():
@@ -441,7 +438,6 @@ def Check_Compatibility(df2, df1):
         return pd.DataFrame([["Dataframes are compatible.","", ""]], columns=['Column', 'Index', 'Value'])
     
     except ValueError as e:
-        print("Error:", e)  # Print the specific error message
         messagebox.showinfo("Error", str(e))
 
 def print_compatibility():
@@ -453,24 +449,27 @@ def print_compatibility():
         else:
             compatibility_str = "\n".join(compatibility['Column'].astype(str) + "\t" + compatibility['Index'].astype(str) + "\t" + compatibility['Value'].astype(str))
             messagebox.showinfo("Compatibility Check", compatibility_str)
-            save_output_to_csv(compatibility_str, 'error_report.csv')
+            save_output_to_csv(compatibility_str, 'invalid_values_error_report.csv')
 
 def save_output_to_csv(error_report, filename):
     # Split the output string into lines
-    lines = error_report.split('\n')
+    lines = error_report.split('\n') 
 
     # Split each line into columns and store them in a list
     data = [line.split('\t') for line in lines]
 
-    # Convert the list into a DataFrame
-    df = pd.DataFrame(data, columns=['Column', 'Index', 'Value'])
-
-    # Show "Complete" message when the function is done
-    messagebox.showinfo("Checking", "Complete!")
+    # Convert the list into a DataFrame (handle two-column DataFrame)
+    if len(data[0]) == 2:
+        df = pd.DataFrame(data, columns=['Index', 'Value'])
+    else:
+        df = pd.DataFrame(data, columns=['Column', 'Index', 'Value'])
 
     # Save the DataFrame to a CSV file
     file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
     df.to_csv(file_path, index=False, header=True)
+
+    # Show "Complete" message when the function is done
+    messagebox.showinfo("Checking", "Complete!")
 
 
 
@@ -499,6 +498,8 @@ def check_value(df2):
         if not invalid_df2.empty:
             return invalid_df2[['Year', 'Make', 'Model']].reset_index().melt(id_vars='index', value_vars=['Year', 'Make', 'Model'], var_name='Column', value_name='Value')
         else:
+            # Display a message box if no invalid combinations were found
+            messagebox.showinfo("Checking", "No invalid combinations found in the dataframe.")
             return None
     except ValueError as e:
         raise e
@@ -515,15 +516,25 @@ def check_custom_values(df2):
             compatibility['Value'] = compatibility.apply(lambda row: f"{df2.iloc[row['index']]['Year']} {df2.iloc[row['index']]['Make']} {df2.iloc[row['index']]['Model']}", axis=1)
             
             compatibility_str = "\n".join(compatibility['Index'] + "\t" + compatibility['Value'])
-            save_output_to_csv(compatibility_str, 'custom_values_error_report.csv')
+            save_custom_output_to_csv(compatibility_str, 'custom_values_error_report.csv')
+
     except ValueError as e:
         messagebox.showinfo("Error", str(e))
 
 
-def save_output_to_csv(error_report, filename):
-    lines = error_report.split('\n')
+def save_custom_output_to_csv(custom_error_report, filename):
+    # Split the output string into lines
+    lines = custom_error_report.split('\n')
+
+    # Split each line into columns and store them in a list
     data = [line.split('\t') for line in lines]
-    df = pd.DataFrame(data, columns=['Index', 'Value'])
+
+    # Convert the list into a DataFrame (handle two-column DataFrame)
+    if len(data[0]) == 2:
+        df = pd.DataFrame(data, columns=['Index', 'Value'])
+    else:
+        df = pd.DataFrame(data, columns=['Column', 'Index', 'Value'])
+
     file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
     df.to_csv(file_path, index=False, header=True)
     messagebox.showinfo("Checking", "Complete!")
