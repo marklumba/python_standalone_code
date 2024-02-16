@@ -479,9 +479,9 @@ def check_value(df2):
             raise ValueError("The dataframe must be provided.")
 
         invalid_combinations = pd.DataFrame({
-            'Year': [2019, 2020, 2021, 2022, 2023, 2024, 2018],
-            'Make': ['Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Jeep'],
-            'Model': ['1500', '1500', '1500', '1500', '1500', '1500', 'Wrangler']
+            'Year': [2019, 2020, 2021, 2022, 2023, 2024, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+            'Make': ['Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Jeep', 'Ram', 'Ram', 'Ram', 'Ram', 'Ram', 'Ram'],
+            'Model': ['1500', '1500', '1500', '1500', '1500', '1500', 'Wrangler', '1500 Classic', '1500 Classic', '1500 Classic', '1500 Classic', '1500 Classic', '1500 Classic']
         })
 
         # Ensure 'Year', 'Make', 'Model' columns are in the correct format and strip whitespaces
