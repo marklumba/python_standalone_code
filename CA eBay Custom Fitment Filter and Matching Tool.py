@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -365,7 +364,8 @@ def read_data_4():
     
             else:
                 formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
-                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
+                #key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
+                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}_{row['Trim']}_{row['Engine']}"
                 formatted_data[key] += '^^' + formatted_row
                 
                                                                                                
