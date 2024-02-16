@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -362,7 +361,8 @@ def read_data_4():
                           
             else:
                 formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
-                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
+                #key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
+                key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}_{row['Trim']}_{row['Engine']}"
                 formatted_data[key] += '^^' + formatted_row
                                                                                 
         # Sort the dictionary by key (i.e., 'PartNumber') in ascending order
@@ -382,9 +382,16 @@ def read_data_4():
             fitment_string = '^^'.join(fitments)
             final_text_list.append(f"{inventory_number}\tUNSHIPPED\t{fitment_string}")
 
+        # # Define a function to extract the number from the 'Inventory Number'
+        # def get_inventory_number(s):
+        #    return int(s.split('\t')[0].split('-')[1])
+            
         # Define a function to extract the number from the 'Inventory Number'
         def get_inventory_number(s):
-           return int(s.split('\t')[0].split('-')[1])
+           try:
+              return int(s.split('\t')[0].split('-')[1])
+           except (ValueError, IndexError):
+              return float('inf')  # Return a large value for non-integer inventory numbers
         
         # Sort the list based on the inventory number
         final_text_list.sort(key=get_inventory_number)
@@ -561,6 +568,7 @@ def save_output_to_csv(error_report, filename):
     # Save the DataFrame to a CSV file
     file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
     df.to_csv(file_path, index=False, header=True)
+    
 
 def run_matching_filter(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
