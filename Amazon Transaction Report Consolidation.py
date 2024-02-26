@@ -1,9 +1,9 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, ttk
 import pandas as pd
 import os
-import numpy as np
 import re
+import xlwings as xw
 
 # Declare df as a global variable
 df = None
@@ -80,11 +80,20 @@ def Transform_1():
             # Drop the filtered rows from the DataFrame
             df = df.drop(rows_to_remove.index)
 
-            df['marketplace'] = df['marketplace'].str.replace('Amazon.com', 'amazon.com')
+            df['marketplace'] = df['marketplace'].str.replace('Amazon.com', 'amazon.com')  
 
-            # Convert the 'date/time' column to the datetime format
-            df['date/time'] = pd.to_datetime(df['date/time'])
+            # Split the 'date/time' column into date/time and timezone
+            df[['date/time', 'timezone']] = df['date/time'].str.rsplit(' ', n=1, expand=True)
 
+            # Convert the 'date/time' column to datetime with explicit UTC timezone
+            df['date/time'] = pd.to_datetime(df['date/time'], utc=True)
+
+            # Format the datetime objects in the 'date/time' column into the desired format with dynamic timezone
+            df['date/time'] = df.apply(lambda row: row['date/time'].strftime('%B %d, %Y %I:%M:%S %p PST') if 'PST' in str(row['timezone']).upper() else row['date/time'].strftime('%B %d, %Y %I:%M:%S %p PDT') if 'PDT' in str(row['timezone']).upper() else row['date/time'].strftime('%B %d, %Y %I:%M:%S %p UTC'), axis=1)
+          
+            # Drop the 'timezone' column if you no longer need it
+            df = df.drop(columns=['timezone'])
+ 
             # Create a new DataFrame with rows where the 'Order number' column is equal to 'Empty' or 'NaN'
             df1 = df[(df['order id'] == 'Empty') | (df['order id'].isna())]
 
@@ -189,12 +198,20 @@ def Transform_1():
  
             # Remove 'Amazon.com'
             df3['marketplace'] = df3['marketplace'].str.replace('Amazon.com', '')
-            
-            # Convert the 'date/time' column into the datetime format
-            df3['date/time'] = pd.to_datetime(df3['date/time'])
+           
 
-            # Format the datetime objects in the 'date/time' column into the desired format
-            df3['date/time'] = df3['date/time'].dt.strftime('%B %d, %Y %I:%M:%S %p PDT')  
+            # Split the 'date/time' column into date/time and timezone
+            df3[['date/time', 'timezone']] = df3['date/time'].str.rsplit(' ', n=1, expand=True)
+
+            # Convert the 'date/time' column to datetime with explicit UTC timezone
+            df3['date/time'] = pd.to_datetime(df3['date/time'], utc=True)
+
+            # Format the datetime objects in the 'date/time' column into the desired format with dynamic timezone
+            df3['date/time'] = df3.apply(lambda row: row['date/time'].strftime('%B %d, %Y %I:%M:%S %p PST') if 'PST' in str(row['timezone']).upper() else row['date/time'].strftime('%B %d, %Y %I:%M:%S %p PDT') if 'PDT' in str(row['timezone']).upper() else row['date/time'].strftime('%B %d, %Y %I:%M:%S %p UTC'), axis=1)
+          
+            # Drop the 'timezone' column if you no longer need it
+            df3 = df3.drop(columns=['timezone'])
+          
 
             # Remove the double quotation marks in the 'marketplace' column
             df3['description'] = df3['description'].str.replace('"', '')       
@@ -202,6 +219,22 @@ def Transform_1():
             # Export the transformed data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", "Amazon Transaction Report Consolidation.xlsx")
             df3.to_excel(file_path, index=False, freeze_panes=(1, 4))
+
+            # Open the Excel file and set all columns width to 15
+            with xw.App(visible=False) as app:
+                wb = xw.Book(file_path)
+
+                # Loop through all worksheets in the workbook
+                for ws in wb.sheets:
+                    # Loop through all columns in the worksheet
+                    for column in ws.api.UsedRange.Columns:
+                        column.ColumnWidth = 15
+
+                    # Save the workbook if needed
+                    wb.save()
+
+                    # Close the workbook
+                    wb.close()
 
 
     except ValueError:
