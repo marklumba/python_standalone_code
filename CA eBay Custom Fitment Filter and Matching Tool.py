@@ -108,22 +108,24 @@ def read_data_1():
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
-            df1 = pd.read_csv(excel_filename)
+            df1 = pd.read_csv(excel_filename, dtype={'PartNumber': 'object', 'Year Beg': 'int64', 'Year End': 'int64', 'Make': 'object', 'Model': 'object',
+                                                     'Submodel': 'object', 'Body': 'object', 'NumDoors': 'object', 'Drive Type': 'object',
+                                                     'Engine - Liter_Display': 'object', 'Engine - CC': 'object', 'Engine - Block Type': 'object',
+                                                     'Engine - Cylinders': 'object', 'Fuel Type Name': 'object', 'Cylinder Type Name': 'object',
+                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'})
         else:
-            df1 = pd.read_excel(excel_filename)
+            df1 = pd.read_excel(excel_filename, dtype={'PartNumber': 'object', 'Year Beg': 'int64', 'Year End': 'int64', 'Make': 'object', 'Model': 'object',
+                                                     'Submodel': 'object', 'Body': 'object', 'NumDoors': 'object', 'Drive Type': 'object',
+                                                     'Engine - Liter_Display': 'object', 'Engine - CC': 'object', 'Engine - Block Type': 'object',
+                                                     'Engine - Cylinders': 'object', 'Fuel Type Name': 'object', 'Cylinder Type Name': 'object',
+                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'})
 
-            # Convert only specific columns to object
-            columns_to_convert_to_object = ['Make', 'Model', 'Submodel',
-                'Body', 'Drive Type', 'Engine - Block Type', 'Engine - Liter_Display',
-                'Fuel Type Name', 'Cylinder Type Name', 'Aspiration'
-            ]
-            df1[columns_to_convert_to_object] = df1[columns_to_convert_to_object].astype(object)
-            
-            # Convert the [NumDoors] data type into float
-            df1['NumDoors'] = df1['NumDoors'].astype(float)
+        # Ensure all columns are strings before using the .str accessor
+        df1 = df1.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
 
-            # Check the data types of the DataFrame
-            print(df1.dtypes)
+
+        #  Check the data types of the DataFrame
+        print(df1.dtypes)
    
         print(df1.head(5))
 
@@ -147,18 +149,28 @@ def read_data_2():
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
-            df2 = pd.read_csv(excel_filename)
+            df2 = pd.read_csv(excel_filename, dtype={'ePID': 'int64', 'Aspiration': 'object', 'Body': 'object', 'Cylinder Type Name': 'object',
+                                                      'DisplayName': 'object', 'Drive Type': 'object', 'Engine': 'object', 'Engine - Block Type': 'object',
+                                                      'Engine - CC': 'object', 'Engine - CID': 'object', 'Engine - Cylinders': 'object',
+                                                      'Engine - Liter_Display': 'object', 'Fuel Type Name': 'object', 'KBB_MODEL': 'object',
+                                                      'Make': 'object', 'Model': 'object', 'NumDoors': 'object', 'Parts Model': 'object',
+                                                      'Submodel': 'object', 'Trim': 'object', 'Year': 'int64'})
         else:
-            df2 = pd.read_excel(excel_filename)
+            df2 = pd.read_excel(excel_filename, dtype={'ePID': 'int64', 'Aspiration': 'object', 'Body': 'object', 'Cylinder Type Name': 'object',
+                                                      'DisplayName': 'object', 'Drive Type': 'object', 'Engine': 'object', 'Engine - Block Type': 'object',
+                                                      'Engine - CC': 'object', 'Engine - CID': 'object', 'Engine - Cylinders': 'object',
+                                                      'Engine - Liter_Display': 'object', 'Fuel Type Name': 'object', 'KBB_MODEL': 'object',
+                                                      'Make': 'object', 'Model': 'object', 'NumDoors': 'object', 'Parts Model': 'object',
+                                                      'Submodel': 'object', 'Trim': 'object', 'Year': 'int64'})
+            
+        # Ensure all columns are strings before using the .str accessor
+        df2 = df2.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
 
-            # Convert the numeric columns to str
-            numeric_columns = ['Engine - CC', 'Engine - CID', 'Engine - Cylinders', 'NumDoors']
-            df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce')
 
-            print(df2.dtypes)
+        print(df2.dtypes)
        
         print(df2.head(5))
-        print(df2.dtypes)
+      
 
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully")
@@ -635,8 +647,8 @@ def run_matching_filter(df1, df2):
             # Append the filtered DataFrame to the list
             filtered_dfs.append(filtered_rows)
 
-        # Concatenate all filtered DataFrames to produce the final result
-        filtered_df2 = pd.concat(filtered_dfs)
+            # Concatenate all filtered DataFrames to produce the final result
+            filtered_df2 = pd.concat(filtered_dfs)
 
         # Add this line to sort 'Year' column in descending order
         filtered_df2 = filtered_df2.sort_values(['PartNumber', 'Year'], ascending=[False, False])
