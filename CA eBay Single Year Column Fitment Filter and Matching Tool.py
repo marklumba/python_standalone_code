@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import filedialog, ttk
 import pandas as pd
@@ -109,26 +110,21 @@ def read_data_1():
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
-            df1 = pd.read_csv(excel_filename)
+            df1 = pd.read_csv(excel_filename, dtype={'PartNumber': 'object', 'Year': 'int64', 'Make': 'object', 'Model': 'object',
+                                                     'Submodel': 'object', 'Body': 'object', 'NumDoors': 'object', 'Drive Type': 'object',
+                                                     'Engine - Liter_Display': 'object', 'Engine - CC': 'object', 'Engine - Block Type': 'object',
+                                                     'Engine - Cylinders': 'object', 'Fuel Type Name': 'object', 'Cylinder Type Name': 'object',
+                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'})
         else:
-            df1 = pd.read_excel(excel_filename)
-           
-           
-            # Convert only specific columns to object
-            columns_to_convert_to_object = ['Make', 'Model', 'Submodel',
-                'Body', 'Drive Type', 'Engine - Block Type', 'Engine - Liter_Display',
-                'Fuel Type Name', 'Cylinder Type Name', 'Aspiration'
-            ]
-            df1[columns_to_convert_to_object] = df1[columns_to_convert_to_object].astype(object)
-            
-            # Convert the [NumDoors] data type into float
-            df1['NumDoors'] = df1['NumDoors'].astype(float)
+            df1 = pd.read_excel(excel_filename, dtype={'PartNumber': 'object', 'Year': 'int64', 'Make': 'object', 'Model': 'object',
+                                                     'Submodel': 'object', 'Body': 'object', 'NumDoors': 'object', 'Drive Type': 'object',
+                                                     'Engine - Liter_Display': 'object', 'Engine - CC': 'object', 'Engine - Block Type': 'object',
+                                                     'Engine - Cylinders': 'object', 'Fuel Type Name': 'object', 'Cylinder Type Name': 'object',
+                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'})
 
-            # Convert the [Year] data type into Int64
-            df1['Year'] = pd.to_numeric(df1['Year'], errors='coerce')
-            df1['Year'] = df1['Year'].astype('Int64')
-
-            print(df1.dtypes)
+        # Ensure all columns are strings before using the .str accessor
+        df1 = df1.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+        print(df1.dtypes)
 
 
         # Show "Complete" message when the function is done
@@ -152,15 +148,23 @@ def read_data_2():
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
-            df2 = pd.read_csv(excel_filename)
+            df2 = pd.read_csv(excel_filename, dtype={'ePID': 'int64', 'Aspiration': 'object', 'Body': 'object', 'Cylinder Type Name': 'object',
+                                                      'DisplayName': 'object', 'Drive Type': 'object', 'Engine': 'object', 'Engine - Block Type': 'object',
+                                                      'Engine - CC': 'object', 'Engine - CID': 'object', 'Engine - Cylinders': 'object',
+                                                      'Engine - Liter_Display': 'object', 'Fuel Type Name': 'object', 'KBB_MODEL': 'object',
+                                                      'Make': 'object', 'Model': 'object', 'NumDoors': 'object', 'Parts Model': 'object',
+                                                      'Submodel': 'object', 'Trim': 'object', 'Year': 'int64'})
         else:
-            df2 = pd.read_excel(excel_filename)
-
-            # Convert the numeric columns to str
-            numeric_columns = ['Engine - CC', 'Engine - CID', 'Engine - Cylinders', 'NumDoors']
-            df2[numeric_columns] = df2[numeric_columns].apply(pd.to_numeric, errors='coerce') 
-
-
+            df2 = pd.read_excel(excel_filename, dtype={'ePID': 'int64', 'Aspiration': 'object', 'Body': 'object', 'Cylinder Type Name': 'object',
+                                                      'DisplayName': 'object', 'Drive Type': 'object', 'Engine': 'object', 'Engine - Block Type': 'object',
+                                                      'Engine - CC': 'object', 'Engine - CID': 'object', 'Engine - Cylinders': 'object',
+                                                      'Engine - Liter_Display': 'object', 'Fuel Type Name': 'object', 'KBB_MODEL': 'object',
+                                                      'Make': 'object', 'Model': 'object', 'NumDoors': 'object', 'Parts Model': 'object',
+                                                      'Submodel': 'object', 'Trim': 'object', 'Year': 'int64'})
+        
+        # Ensure all columns are strings before using the .str accessor
+        df2 = df2.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+        
         print(df2.dtypes)
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully!")
@@ -283,6 +287,8 @@ def read_data_4():
         # Filter data based on specified conditions
         years_by_part_make_model = {}
         years_by_part_make_model_trim = {}
+       
+
         
         for _, row in df3.iterrows():
             if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
@@ -296,7 +302,8 @@ def read_data_4():
             ]):
                 combined_key = (row['PartNumber'], row['Make'], row['Model'])
                 years_by_part_make_model.setdefault(combined_key, []).append(row['Year'])
-
+              
+            
             elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['Trim']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
                 'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
                 'DisplayName', 'Drive Type', 'Engine',
@@ -306,8 +313,11 @@ def read_data_4():
                 'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel'
                 
             ]):
+                #combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'], row['DisplayName'])
                 combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'])
                 years_by_part_make_model_trim.setdefault(combined_key, []).append(row['Year'])
+ 
+
 
         # Iterate the year in the dict in years_by_part_make_model
         for key, years in years_by_part_make_model.items():
@@ -323,9 +333,11 @@ def read_data_4():
            if len(set(years)) == 1:  # Check if all years are the same
               year = years[0]
               years_by_part_make_model_trim[key] = year
+        
            else:
               year_range = f"{min(years)}-{max(years)}" if years else "No valid years found"
               years_by_part_make_model_trim[key] = year_range
+                 
         
         formatted_data = defaultdict(str)
 
@@ -346,15 +358,19 @@ def read_data_4():
                 formatted_data[key] = formatted_string
                 
             
+
+            
             elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['Trim']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
                 'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
                 'DisplayName', 'Drive Type', 'Engine',
                 'Engine - Block Type', 'Engine - CC',
                 'Engine - CID', 'Engine - Cylinders', 
                 'Engine - Liter_Display', 'Fuel Type Name',
-                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel'              
+                'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel' 
+
             ]): 
                 combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'])
+                #combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'], row['DisplayName'])
                 formatted_string = f"{years_by_part_make_model_trim.get(combined_key, 'No valid years found')}|{row['Make']}|{row['Model']}|{row['Trim']}::{row['Notes']}"
                 key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}_{row['Trim']}"
                 formatted_data[key] = formatted_string
@@ -408,6 +424,9 @@ def read_data_4():
 
         # Suppose final_text and final_text_list are defined earlier in your code
         final_text = final_text.replace("::nan", "")
+
+        # Suppose final_text and final_text_list are defined earlier in your code
+        final_text = final_text.replace("|nan", "")
             
         # Show "Complete" message when the function is done
         messagebox.showinfo("CA eBay Compatibility", "Compatibility Complete")
@@ -458,7 +477,8 @@ def pre_filter_eBay_MVL_File(df1, df2):
         filtered_df3 = filtered_df3.drop_duplicates()
 
         # Generate the current date and time as a string
-        current_datetime = datetime.now().strftime("%Y-%m-%d")
+        #current_datetime = datetime.now().strftime("%Y-%m-%d")
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # Define the output file name with the date and time
         output_file_name = f"FilterMVLFile_Output_{current_datetime}.xlsx"
@@ -768,12 +788,12 @@ def run_matching_filter_2(df1, df2):
 
                 # If any of the combinations are present, apply columns_to_retain_2
                 if combination_present:
-                    columns_to_filter_2 = ['Make', 'Model', 'Submodel', 'Body', 'NumDoors']
+                    columns_to_filter_2 = ['Year','Make', 'Model', 'Submodel', 'Body', 'NumDoors']
                 else:
-                    columns_to_filter_2 = ['Make', 'Model', 'Submodel', 'Body', 'NumDoors',
+                    columns_to_filter_2 = ['Year', 'Make', 'Model', 'Submodel', 'Body', 'NumDoors',
                                            'Drive Type', 'Engine - Liter_Display', 'Engine - CC',
-                                           'Engine - Block Type', 'Engine - Cylinders',
-                                           'Fuel Type Name', 'Cylinder Type Name', 'Aspiration', 'Engine - CID']
+                                           'Engine - Block Type', 'Engine - Cylinders', 'Fuel Type Name',
+                                           'Cylinder Type Name', 'Aspiration', 'Engine - CID']
 
           
                 for column in columns_to_filter_2:
@@ -792,7 +812,8 @@ def run_matching_filter_2(df1, df2):
                 # If any of the combinations are present and no other fields are present, apply columns_to_retain_2
                 if combination_present and not other_fields_present:
 
-                    # List of columns to retain
+                   # List of columns to retain
+                   #columns_to_retain_2 = ['Trim', 'Year', 'Model', 'Make', 'PartNumber', 'Notes', 'DisplayName']
                    columns_to_retain_2 = ['Trim', 'Year', 'Model', 'Make', 'PartNumber', 'Notes']
 
                    # Iterate through the DataFrame and set empty values for other columns
