@@ -1,6 +1,6 @@
-
 import tkinter as tk
 from tkinter import filedialog, ttk
+import numpy as np
 import pandas as pd
 from tkinter import messagebox
 import os
@@ -10,7 +10,8 @@ import datetime
 import customtkinter
 from collections import defaultdict
 import re
-
+import openpyxl
+import json
 
 # Declare df1 and df2 as global variables
 df1 = None
@@ -61,7 +62,7 @@ button4.place(rely=0.4, relx=0.01)
 button5 = customtkinter.CTkButton(frame1, text="Run Matching Filter", command=lambda: run_matching_filter(df1, df2), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button5.place(rely=0.2, relx=0.01)
 
-button6 = customtkinter.CTkButton(frame1, text="Check Valid Values", command=lambda: print_compatibility(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
+button6 = customtkinter.CTkButton(frame1, text="Check Valid Values", command=lambda: print_compatibility(df1, df2, standard_columns), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
 button6.place(rely=0.5, relx=0.01)
 
 button7 = customtkinter.CTkButton(frame1, text="Create CA eBay Compatibilty", command=lambda: read_data_3(), fg_color='blue', text_color='white', font=('Arial', 12, 'bold'))
@@ -83,25 +84,53 @@ label_file2 = ttk.Label(file_frame1, text="No File Selected", background="lightg
 label_file2.place(rely=0, relx=0)
 
 
+
 def file_dialog_1():
     """This Function will open the file explorer and assign the chosen file path to label_file1"""
     global file_path_1  # Declare as global to update it
-    filename = filedialog.askopenfilename(initialdir="/",
+
+    # Load last accessed directory
+    initialdir = "/"
+    if os.path.exists('last_dir.json'):
+        with open('last_dir.json', 'r') as f:
+            initialdir = json.load(f).get('last_dir', "/")
+
+    filename = filedialog.askopenfilename(initialdir=initialdir,
                                           title="Select A File",
                                           filetype=(("xlsx files", "*.xlsx"),("All Files", "*.*")))
     label_file1["text"] = filename
     file_path_1 = filename  # Update the global variable
+
+    # Save directory of selected file
+    with open('last_dir.json', 'w') as f:
+        json.dump({'last_dir': os.path.dirname(filename)}, f)
+
     return None
+
 
 def file_dialog_2():
     """This Function will open the file explorer and assign the chosen file path to label_file2"""
     global file_path_2  # Declare as global to update it
-    filename = filedialog.askopenfilename(initialdir="/",
+
+    # Load last accessed directory
+    initialdir = "/"
+    if os.path.exists('last_dir.json'):
+        with open('last_dir.json', 'r') as f:
+            initialdir = json.load(f).get('last_dir', "/")
+
+    filename = filedialog.askopenfilename(initialdir=initialdir,
                                           title="Select A File",
                                           filetype=(("xlsx files", "*.xlsx"),("All Files", "*.*")))
     label_file2["text"] = filename
     file_path_2 = filename  # Update the global variable
+    
+    # Save directory of selected file
+    with open('last_dir.json', 'w') as f:
+        json.dump({'last_dir': os.path.dirname(filename)}, f)
+
     return None
+
+
 
 def read_data_1():
     """If the file selected is valid this will load the file into the Treeview"""
@@ -110,23 +139,47 @@ def read_data_1():
     try:
         excel_filename = r"{}".format(file_path)
         if excel_filename[-4:] == ".csv":
+            
             df1 = pd.read_csv(excel_filename, dtype={'PartNumber': 'object', 'Year': 'int64', 'Make': 'object', 'Model': 'object',
                                                      'Submodel': 'object', 'Body': 'object', 'NumDoors': 'object', 'Drive Type': 'object',
                                                      'Engine - Liter_Display': 'object', 'Engine - CC': 'object', 'Engine - Block Type': 'object',
                                                      'Engine - Cylinders': 'object', 'Fuel Type Name': 'object', 'Cylinder Type Name': 'object',
-                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'})
+                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'},
+                                              converters={'PartNumber': str,'Make': str, 'Model': str, 'Submodel': str, 'Body': str, 'NumDoors': str,
+                                                     'Drive Type': str, 'Engine - Liter_Display': str, 'Engine - CC': str, 'Engine - Block Type': str, 
+                                                     'Engine - Cylinders': str, 'Fuel Type Name': str, 'Cylinder Type Name': str, 
+                                                     'Aspiration': str, 'Engine - CID': str, 'Notes': str})
         else:
             df1 = pd.read_excel(excel_filename, dtype={'PartNumber': 'object', 'Year': 'int64', 'Make': 'object', 'Model': 'object',
                                                      'Submodel': 'object', 'Body': 'object', 'NumDoors': 'object', 'Drive Type': 'object',
                                                      'Engine - Liter_Display': 'object', 'Engine - CC': 'object', 'Engine - Block Type': 'object',
                                                      'Engine - Cylinders': 'object', 'Fuel Type Name': 'object', 'Cylinder Type Name': 'object',
-                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'})
+                                                     'Aspiration': 'object', 'Engine - CID': 'object', 'Notes': 'object'},
+                                                converters={'PartNumber': str,'Make': str, 'Model': str, 'Submodel': str, 'Body': str, 'NumDoors': str,
+                                                     'Drive Type': str, 'Engine - Liter_Display': str, 'Engine - CC': str, 'Engine - Block Type': str, 
+                                                     'Engine - Cylinders': str, 'Fuel Type Name': str, 'Cylinder Type Name': str, 
+                                                     'Aspiration': str, 'Engine - CID': str, 'Notes': str})
 
         # Ensure all columns are strings before using the .str accessor
-        df1 = df1.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+        df1 = df1.apply(lambda x: x.map(lambda y: str(y).strip() if isinstance(y, str) else y))
+       
+        # Define the pattern for standalone hyphens and double hyphens
+        pattern = r'^-{1,2}$'
+
+
+        # Apply regex substitution to each element in the DataFrame
+        df1 = df1.apply(
+            lambda col: col.map(
+               lambda cell: np.nan if isinstance(cell, str) and re.match(pattern, cell) else cell
+            )
+        )
+
+
+        print(df1.tail(15))
+
         print(df1.dtypes)
 
-
+    
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully!")
         
@@ -163,9 +216,22 @@ def read_data_2():
                                                       'Submodel': 'object', 'Trim': 'object', 'Year': 'int64'})
         
         # Ensure all columns are strings before using the .str accessor
-        df2 = df2.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+        df2 = df2.apply(lambda x: x.map(lambda y: str(y).strip() if isinstance(y, str) else y))
+
+        # Define the pattern for standalone hyphens and double hyphens
+        pattern = r'^-{1,2}$'
+
         
+        # Apply regex substitution to each element in the DataFrame
+        df2 = df2.apply(
+            lambda col: col.map(
+               lambda cell: np.nan if isinstance(cell, str) and re.match(pattern, cell) else cell
+            )
+        )
+
+               
         print(df2.dtypes)
+
         # Show "Complete" message when the function is done
         messagebox.showinfo("Read and Save", "completed successfully!")
     
@@ -178,6 +244,7 @@ def read_data_2():
         # Display an error message using the messagebox
         messagebox.showerror("Error", f"No such file as {file_path}")
         return None
+    
     
 def read_data_3():
     """If the file selected is valid this will load the file into the Treeview"""
@@ -202,10 +269,14 @@ def read_data_3():
     latest_file_path = os.path.join(local_directory, latest_file)
 
     try:
-        if latest_file_path[-4:] == ".csv":
-            df3 = pd.read_csv(latest_file_path)
+        if latest_file_path.endswith(".csv"):
+            df3 = pd.read_csv(latest_file_path, encoding='utf-8', errors='ignore')
         else:
-            df3 = pd.read_excel(latest_file_path)
+            workbook = openpyxl.load_workbook(latest_file_path, data_only=True)
+            worksheet = workbook.active
+            data = worksheet.values
+            columns = next(data)  # Get column names
+            df3 = pd.DataFrame(data, columns=columns)
 
             # Initialize an empty dictionary to store the formatted strings
             formatted_data = {}
@@ -247,20 +318,18 @@ def read_data_3():
             # Define the full path to the output text file on your Desktop
             output_file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
 
+
             # Write the final text to the output text file
-            with open(output_file_path, 'w') as txt_file:
+            with open(output_file_path, 'w', encoding='utf-8') as txt_file:
                 txt_file.write(final_text)
 
-    # Handling error
-    except ValueError:
-        # Display an error message using the messagebox
-        messagebox.showerror("Error", f"The file you have chosen is invalid")
-        return None
-    except FileNotFoundError:
-        # Display an error message using the messagebox
-        messagebox.showerror("Error", f"No such file as {latest_file_path}")
-        return None
+
+    except (ValueError, FileNotFoundError, IOError) as e:
+        error_message = f"An error occurred while reading the file: {str(e)}"
+        messagebox.showerror("Error", error_message)
+
     
+
 def read_data_4():
     global df3  # Declare df as global to update it
     
@@ -280,16 +349,18 @@ def read_data_4():
 
     try:
         if latest_file_path.endswith(".csv"):
-            df3 = pd.read_csv(latest_file_path)
+            df3 = pd.read_csv(latest_file_path, encoding='utf-8', errors='ignore')
         else:
-            df3 = pd.read_excel(latest_file_path)
+            workbook = openpyxl.load_workbook(latest_file_path, data_only=True)
+            worksheet = workbook.active
+            data = worksheet.values
+            columns = next(data)  # Get column names
+            df3 = pd.DataFrame(data, columns=columns)
 
         # Filter data based on specified conditions
         years_by_part_make_model = {}
         years_by_part_make_model_trim = {}
-       
 
-        
         for _, row in df3.iterrows():
             if pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
                 'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
@@ -302,8 +373,6 @@ def read_data_4():
             ]):
                 combined_key = (row['PartNumber'], row['Make'], row['Model'])
                 years_by_part_make_model.setdefault(combined_key, []).append(row['Year'])
-              
-            
             elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['Trim']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
                 'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
                 'DisplayName', 'Drive Type', 'Engine',
@@ -311,13 +380,9 @@ def read_data_4():
                 'Engine - CID', 'Engine - Cylinders',
                 'Engine - Liter_Display', 'Fuel Type Name',
                 'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel'
-                
             ]):
-                #combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'], row['DisplayName'])
                 combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'])
                 years_by_part_make_model_trim.setdefault(combined_key, []).append(row['Year'])
- 
-
 
         # Iterate the year in the dict in years_by_part_make_model
         for key, years in years_by_part_make_model.items():
@@ -333,12 +398,10 @@ def read_data_4():
            if len(set(years)) == 1:  # Check if all years are the same
               year = years[0]
               years_by_part_make_model_trim[key] = year
-        
            else:
               year_range = f"{min(years)}-{max(years)}" if years else "No valid years found"
               years_by_part_make_model_trim[key] = year_range
                  
-        
         formatted_data = defaultdict(str)
 
         for _, row in df3.iterrows():
@@ -351,15 +414,10 @@ def read_data_4():
                 'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel',
                 'Trim'
             ]): 
-                
                 combined_key = (row['PartNumber'], row['Make'], row['Model'])
                 formatted_string = f"{years_by_part_make_model.get(combined_key, 'No valid years found')}|{row['Make']}|{row['Model']}::{row['Notes']}"
                 key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
                 formatted_data[key] = formatted_string
-                
-            
-
-            
             elif pd.notna(row['Year']) and pd.notna(row['Make']) and pd.notna(row['Model']) and pd.notna(row['Trim']) and pd.notna(row['PartNumber']) and all(pd.isnull(row[col]) for col in [
                 'ePID', 'Aspiration', 'Body', 'Cylinder Type Name', 
                 'DisplayName', 'Drive Type', 'Engine',
@@ -367,20 +425,16 @@ def read_data_4():
                 'Engine - CID', 'Engine - Cylinders', 
                 'Engine - Liter_Display', 'Fuel Type Name',
                 'KBB_MODEL', 'NumDoors', 'Parts Model', 'Submodel' 
-
             ]): 
                 combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'])
-                #combined_key = (row['PartNumber'], row['Make'], row['Model'], row['Trim'], row['DisplayName'])
                 formatted_string = f"{years_by_part_make_model_trim.get(combined_key, 'No valid years found')}|{row['Make']}|{row['Model']}|{row['Trim']}::{row['Notes']}"
                 key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}_{row['Trim']}"
                 formatted_data[key] = formatted_string
-                          
             else:
                 formatted_row = f"{row['Year']}|{row['Make']}|{row['Model']}|{row['Trim']}|{row['Engine']}::{row['Notes']}"
-                #key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}"
                 key = f"{row['PartNumber']}_{row['Make']}_{row['Model']}_{row['Trim']}_{row['Engine']}"
                 formatted_data[key] += '^^' + formatted_row
-                                                                                
+
         # Sort the dictionary by key (i.e., 'PartNumber') in ascending order
         formatted_data = dict(sorted(formatted_data.items(), key=lambda item: item[1], reverse=False))
 
@@ -398,10 +452,6 @@ def read_data_4():
             fitment_string = '^^'.join(fitments)
             final_text_list.append(f"{inventory_number}\tUNSHIPPED\t{fitment_string}")
 
-        # # Define a function to extract the number from the 'Inventory Number'
-        # def get_inventory_number(s):
-        #    return int(s.split('\t')[0].split('-')[1])
-            
         # Define a function to extract the number from the 'Inventory Number'
         def get_inventory_number(s):
            try:
@@ -414,7 +464,6 @@ def read_data_4():
 
         # Remove the element '^^^^' and replace with '^^'
         final_text_list = [s.replace('^^^^', '^^') for s in final_text_list]
-        
 
         # Remove the element '^^' at the beginning of string text fitment
         final_text_list = [re.sub(r'UNSHIPPED\s\^\^', 'UNSHIPPED\t', s) for s in final_text_list] 
@@ -438,15 +487,15 @@ def read_data_4():
         output_file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
         
         # Write the final text to the output text file
-        with open(output_file_path, 'w') as txt_file:
+        with open(output_file_path, 'w', encoding='utf-8') as txt_file:
             txt_file.write(final_text)
 
-    except ValueError:
-        messagebox.showerror("Error", f"The file you have chosen is invalid")
-    except FileNotFoundError:
-        messagebox.showerror("Error", f"No such file as {latest_file_path}")
+    except (ValueError, FileNotFoundError, IOError) as e:
+        error_message = f"An error occurred while reading the file: {str(e)}"
+        messagebox.showerror("Error", error_message)
 
-    
+
+
 def pre_filter_eBay_MVL_File(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
         filtered_dfs = []  # List to store filtered DataFrames
@@ -463,6 +512,7 @@ def pre_filter_eBay_MVL_File(df1, df2):
                 if pd.notna(value):
                     # Custom column filter
                     column_filters &= (df2[column].astype(str) == str(value))
+
                     
             # Filtered rows in df2 for this row in df1
             filtered_rows = df2.loc[column_filters].copy()  # Use .copy() to avoid SettingWithCopyWarning
@@ -514,36 +564,48 @@ def pre_filter_eBay_MVL_File(df1, df2):
     return filtered_df3
 
 
-def Check_Compatibility(df1, df2):
-    """Checks the compatibility of two dataframes, ignoring empty values in df1.
+
+# Set a list of standard columns for the custom fitment
+standard_columns = ['PartNumber', 'Year', 'Make', 'Model', 'Submodel', 'Body', 'NumDoors', 'Drive Type', 'Engine - Liter_Display', 
+                    'Engine - CC', 'Engine - Block Type', 'Engine - Cylinders', 'Fuel Type Name', 'Cylinder Type Name', 'Aspiration',
+                    'Engine - CID', 'Notes']
+
+def Check_Compatibility(df1, df2, standard_columns):
+    """Checks the compatibility of two dataframes against a standard list of columns, ignoring empty values in df1.
 
     Args:
         df1 (pandas.DataFrame): The first dataframe.
         df2 (pandas.DataFrame): The second dataframe.
+        standard_columns (list): The standard list of columns both dataframes should have.
 
     Returns:
         pandas.DataFrame: A DataFrame with details of incompatibility if the dataframes are not compatible, None otherwise.
     """
-    
     try:
         # Check if both dataframes are loaded and not empty.
         if df1 is None or df2 is None:
             raise ValueError("Both dataframes must be provided.")
-
-        # Find the common columns between the two dataframes.
-        common_columns = set(df1.columns) & set(df2.columns)
-
-        # Check if there are any common columns.
-        if not common_columns:
-            return pd.DataFrame([["No common columns found between the two dataframes.", None, None]], columns=['Column', 'Index', 'Value'])
         
         # Initialize a list to store messages about incompatible columns
         incompatible_columns = []
 
+        # Check for columns in df1 that are not in the standard columns
+        df1_extra_columns = [col for col in df1.columns if col not in standard_columns]
+        if df1_extra_columns:
+            incompatible_columns.append([None, "1", None, ', '.join(df1_extra_columns)])
+
+        # Find the common columns between the two dataframes and the standard columns.
+        common_columns = set(df1.columns) & set(df2.columns) & set(standard_columns)
+        
+        # Check if there are any common columns.
+        if not common_columns:
+            return pd.DataFrame([["No common columns found between the dataframes and the standard list.", None, None, None]], 
+                                columns=['Column', 'Row Number', 'Value', 'Wrong Column Name'])
+
         # Check if all values in the common columns of df1 (ignoring empty values) are present in df2.
         for column in common_columns:
-            values1 = df1[column].astype(str).replace('nan', '').str.strip()
-            values2 = df2[column].astype(str).replace('nan', '').str.strip()
+            values1 = df1[column].fillna('').astype(str).str.strip()
+            values2 = df2[column].fillna('').astype(str).str.strip()
 
             # Filter out empty values in df1
             non_empty_values1 = values1[values1 != '']
@@ -552,43 +614,42 @@ def Check_Compatibility(df1, df2):
             if not non_empty_values1.isin(values2).all():
                 incompatible_values = non_empty_values1[~non_empty_values1.isin(values2)]
                 for index, value in incompatible_values.items():
-                    incompatible_columns.append([column, index, value])
+                    # Adjust the index to match the CSV row numbering
+                    incompatible_columns.append([column, index + 2, value, ''])
         
         # If we found any incompatible columns, return a DataFrame with their details
         if incompatible_columns:
-            return pd.DataFrame(incompatible_columns, columns=['Column', 'Index', 'Value'])
-        
+            return pd.DataFrame(incompatible_columns, columns=['Column', 'Row Number', 'Value', 'Wrong Column Name'])
+
         # If we reach this point, all non-empty values in the common columns of df1 are present in df2, so the dataframes are compatible.
-        return pd.DataFrame([["Dataframes are compatible.","", ""]], columns=['Column', 'Index', 'Value'])
+        return pd.DataFrame([["Dataframes are compatible.", "", "", ""]], columns=['Column', 'Row Number', 'Value', 'Wrong Column Name'])
     
     except ValueError as e:
         messagebox.showinfo("Error", str(e))
+        return None
 
-def print_compatibility():
-    compatibility = Check_Compatibility(df1, df2)  # replace df1 and df2 with your actual dataframes
+def print_compatibility(df1, df2, standard_columns):
+    compatibility = Check_Compatibility(df1, df2, standard_columns)
     if compatibility is not None:
-        if isinstance(compatibility, str):
-            messagebox.showinfo("Compatibility Check", compatibility)
+        if compatibility['Column'].iloc[0] == "Dataframes are compatible.":
+            messagebox.showinfo("Compatibility Check", "Dataframes are compatible.")
             save_output_to_csv(compatibility, 'compatibility.csv')
         else:
-            compatibility_str = "\n".join(compatibility['Column'].astype(str) + "\t" + compatibility['Index'].astype(str) + "\t" + compatibility['Value'].astype(str))
+            compatibility_str = "\n".join(
+                compatibility['Column'].astype(str) + "\t" +
+                compatibility['Row Number'].astype(str) + "\t" +
+                compatibility['Value'].astype(str) + "\t" +
+                compatibility['Wrong Column Name'].astype(str)
+            )
             messagebox.showinfo("Compatibility Check", compatibility_str)
-            save_output_to_csv(compatibility_str, 'error_report.csv')
+            save_output_to_csv(compatibility, 'error_report.csv')
 
-def save_output_to_csv(error_report, filename):
-    # Split the output string into lines
-    lines = error_report.split('\n')
-
-    # Split each line into columns and store them in a list
-    data = [line.split('\t') for line in lines]
-
-    # Convert the list into a DataFrame
-    df = pd.DataFrame(data, columns=['Column', 'Index', 'Value'])
-
-    # Save the DataFrame to a CSV file
+def save_output_to_csv(df, filename):
     file_path = os.path.join(os.path.expanduser("~"), "Desktop", filename)
     df.to_csv(file_path, index=False, header=True)
-    
+
+
+
 
 def run_matching_filter(df1, df2):
     if df1 is not None and not df1.empty and df2 is not None and not df2.empty:
@@ -611,6 +672,8 @@ def run_matching_filter(df1, df2):
                 if pd.notna(value):
                     # Custom column filter
                     column_filters &= (df2[column].astype(str) == str(value))
+
+                    
 
             # Filtered rows in df2 for this row in df1
             filtered_rows = df2.loc[column_filters].copy()  # Use .copy() to avoid SettingWithCopyWarning
@@ -719,7 +782,7 @@ def run_matching_filter_2(df1, df2):
                 if pd.notna(value):
                     # Custom column filter
                     column_filters &= (df2[column].astype(str) == str(value))
-
+           
 
             # Filtered rows in df2 for this row in df1
             filtered_rows = df2.loc[column_filters].copy()
@@ -736,13 +799,6 @@ def run_matching_filter_2(df1, df2):
         else:
             filtered_df = pd.DataFrame()
 
-        # # Check if there are no objects to concatenate
-        # if not filtered_dfs:
-        #    messagebox.showinfo("Error", "No Fits All, Use Run Matching Filter")
-        #    return
-
-        # Concatenate all filtered DataFrames to produce the final result        
-        #filtered_df = pd.concat(filtered_dfs)
        
         # List of columns to retain
         columns_to_retain = ['Year', 'Model', 'Make', 'PartNumber', 'Notes']
@@ -751,9 +807,6 @@ def run_matching_filter_2(df1, df2):
         for column in filtered_df.columns:
             if column not in columns_to_retain:
                 filtered_df[column] = ''
-
-        # Add this line to sort 'Year' column in descending order
-        # filtered_df = filtered_df.sort_values(['PartNumber', 'Year'], ascending=[False, False])
         
         # Add this line to check if 'PartNumber' column exists before sorting
         if 'PartNumber' in filtered_df.columns:
@@ -799,8 +852,10 @@ def run_matching_filter_2(df1, df2):
                 for column in columns_to_filter_2:
                     value = row[column]
                     if pd.notna(value):
-                        # Custom column filter
+                        #Custom column filter
                         column_filters_2 &= (df2[column].astype(str) == str(value))
+                      
+
 
                 # Filtered rows in df2 for this row in df1
                 filtered_rows_2 = df2.loc[column_filters_2].copy()
@@ -851,7 +906,8 @@ def run_matching_filter_2(df1, df2):
 
             # Add this line to sort 'Year' column in descending order
             final_result = final_result.sort_values(by=['PartNumber', 'Year'], ascending=[True, False])
-
+       
+ 
             # Export the filtered data to a new Excel file
             file_path = os.path.join(os.path.expanduser("~"), "Desktop", output_file_name)
             final_result.to_excel(file_path, index=False, freeze_panes=(1, 0))
